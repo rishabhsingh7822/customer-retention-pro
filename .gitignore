@@ -1,0 +1,16 @@
+# Python junk
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Data (NEVER commit large CSVs to Git)
+data/
+*.csv
+*.xlsx
+
+# Models
+*.pkl
+
+# Environment
+.env
+.venv/
