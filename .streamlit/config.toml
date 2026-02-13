@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#F59E0B"        # Amber/Gold - Premium interactive elements
+backgroundColor = "#1F2937"     # Dark Blue-Grey
+secondaryBackgroundColor = "#111827" # Near Black sidebar
+textColor = "#F3F4F6"           # Light Grey
+font = "monospace"              # Monospace adds a technical/code-centric vibe
