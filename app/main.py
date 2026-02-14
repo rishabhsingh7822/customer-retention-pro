@@ -135,7 +135,7 @@ with col_graph:
         mode='text',
         text=['💎 VIP', '💀 Churn'],
         textposition="top center",
-        textfont=dict(color="white" if prediction_prob > 0.5 else "blue")
+        textfont=dict(color="white" if prediction_prob > 0.5 else "red")
     ))
 
     # High-Contrast Layout
