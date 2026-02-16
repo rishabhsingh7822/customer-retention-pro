@@ -1,0 +1,60 @@
+{
+  "feature_names": [
+    "Recency",
+    "Frequency",
+    "Monetary",
+    "customer_age_days",
+    "days_between_purchases",
+    "orders_last_30d",
+    "orders_last_90d",
+    "avg_order_value",
+    "max_order_value",
+    "std_order_value",
+    "product_diversity",
+    "repeat_purchase_rate",
+    "avg_basket_size",
+    "total_items_bought",
+    "is_weekend",
+    "hour",
+    "spending_increasing"
+  ],
+  "feature_count": 17,
+  "model_type": "XGBoost",
+  "n_estimators": 200,
+  "max_depth": 5,
+  "trained_date": "2026-02-16 19:53:05",
+  "accuracy": 0.9971537001897534,
+  "roc_auc": 0.9999780194015416,
+  "train_samples": 4212,
+  "test_samples": 1054,
+  "churn_rate": 0.5653247246486897,
+  "features_used": {
+    "rfm_basic": [
+      "Recency",
+      "Frequency",
+      "Monetary"
+    ],
+    "temporal": [
+      "customer_age_days",
+      "days_between_purchases",
+      "orders_last_30d",
+      "orders_last_90d"
+    ],
+    "transaction": [
+      "avg_order_value",
+      "max_order_value",
+      "std_order_value"
+    ],
+    "behavioral": [
+      "product_diversity",
+      "repeat_purchase_rate",
+      "avg_basket_size",
+      "total_items_bought"
+    ],
+    "patterns": [
+      "is_weekend",
+      "hour",
+      "spending_increasing"
+    ]
+  }
+}
