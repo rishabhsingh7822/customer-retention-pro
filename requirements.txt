@@ -7,3 +7,5 @@ matplotlib
 xgboost
 scikit-learn
 plotly
+groq
+python-dotenv
