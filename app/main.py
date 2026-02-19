@@ -303,11 +303,11 @@ with st.sidebar:
 
     page = st.radio(
         "",
-        ["◈ Live Predictor",
-         "◈ AI Chat Analyst",
-         "◈ Risk Overview",
-         "◈ At-Risk Customers",
-         "◈ Executive Brief"],
+        ["1. Live Predictor",
+         "2. AI Chat Analyst",
+         "3. Risk Overview",
+         "4. At-Risk Customers",
+         "5. Executive Brief"],
         label_visibility="collapsed"
     )
 
@@ -352,7 +352,7 @@ with st.sidebar:
 # ============================================
 # PAGE 1 — LIVE PREDICTOR
 # ============================================
-if page == "◈ Live Predictor":
+if page == "1. Live Predictor":
     st.markdown("""
     <div class="page-header">
         <span class="page-title">Live Predictor</span>
@@ -428,7 +428,6 @@ if page == "◈ Live Predictor":
         ])
 
         # 3D Chart
-        # 3D Chart
         st.markdown('<div class="section-label">Vector Space</div>', unsafe_allow_html=True)
         fig = go.Figure()
         
@@ -448,7 +447,7 @@ if page == "◈ Live Predictor":
             )
         ))
         
-        # Trace 1 -> Renamed to "Benchmarks"
+        # Trace 1 ->"Benchmarks"
         fig.add_trace(go.Scatter3d(
             name='Benchmarks',  # <--- ADDED PROPER NAME
             x=[15, 310], y=[45, 1], z=[9000, 40],
@@ -558,7 +557,7 @@ Be direct. Reference their actual numbers. No generic advice."""
 # ============================================
 # PAGE 2 — AI CHAT ANALYST 
 # ============================================
-elif page == "◈ AI Chat Analyst":
+elif page == "2. AI Chat Analyst":
     st.markdown("""
     <div class="page-header">
         <span class="page-title">AI Analyst</span>
@@ -663,7 +662,7 @@ elif page == "◈ AI Chat Analyst":
 # ============================================
 # PAGE 3 — RISK OVERVIEW
 # ============================================
-elif page == "◈ Risk Overview":
+elif page == "3. Risk Overview":
     st.markdown("""
     <div class="page-header">
         <span class="page-title">Risk Overview</span>
@@ -761,7 +760,7 @@ elif page == "◈ Risk Overview":
 # ============================================
 # PAGE 4 — AT-RISK CUSTOMERS
 # ============================================
-elif page == "◈ At-Risk Customers":
+elif page == "4. At-Risk Customers":
     st.markdown("""
     <div class="page-header">
         <span class="page-title">At-Risk Customers</span>
@@ -851,7 +850,7 @@ Sharp and direct. No fluff."""
 # ============================================
 # PAGE 5 — EXECUTIVE BRIEF
 # ============================================
-elif page == "◈ Executive Brief":
+elif page == "5. Executive Brief":
     st.markdown("""
     <div class="page-header">
         <span class="page-title">Executive Brief</span>
