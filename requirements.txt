@@ -9,3 +9,4 @@ scikit-learn
 plotly
 groq
 python-dotenv
+streamlit-authenticator

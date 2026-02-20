@@ -6,7 +6,8 @@ import numpy as np
 import os
 import json
 from groq import Groq 
-from dotenv import load_dotenv 
+from dotenv import load_dotenv
+import streamlit_authenticator as stauth 
 load_dotenv()
 
 # ============================================
@@ -536,13 +537,252 @@ p code, li code, .ai-stream-box code, [data-testid="stChatMessage"] code {{
     html body div[data-testid="stSidebarCollapseButton"]:hover::after {{
         color: var(--accent-red) !important;
     }}
+    /* =========================================
+       ULTIMATE DATAFRAME MENU & POPOVER OVERLAP FIX
+       ========================================= */
+    /* Force the popover container background */
+    div[data-baseweb="popover"] {{
+        background-color: var(--bg-card) !important;
+    }}
+
+    ul[data-baseweb="menu"] {{
+        background-color: var(--bg-card) !important;
+    }}
+
+    /* Force menu items to expand their height automatically and align content */
+    ul[data-baseweb="menu"] li {{
+        height: auto !important;
+        min-height: 38px !important; 
+        padding: 8px 16px !important;
+        display: flex !important;
+        align-items: center !important;
+        flex-direction: row !important;
+    }}
+
+    /* Strictly forbid text from wrapping or stacking */
+    ul[data-baseweb="menu"] li span,
+    ul[data-baseweb="menu"] li div,
+    ul[data-baseweb="menu"] li p {{
+        white-space: nowrap !important;
+        line-height: normal !important;
+        height: auto !important;
+        margin: 0 !important;
+        display: inline-block !important;
+    }}
+    
+    /* Ensure the sorting/filtering icons have proper space and don't shrink */
+    ul[data-baseweb="menu"] li svg {{
+        flex-shrink: 0 !important;
+        margin-right: 12px !important;
+        display: inline-block !important;
+    }}
+    /* =========================================
+       FILE UPLOADER LIGHT/DARK MODE (FINAL)
+       ========================================= */
+    /* 1. Target the actual HTML section of the uploader */
+    [data-testid="stFileUploader"] section {{
+        background-color: var(--bg-card) !important;
+        border: 2px dashed var(--border-bright) !important; 
+        border-radius: 6px !important;
+    }}
+    
+    /* 2. Force inner wrappers to be transparent so the card background shows through */
+    [data-testid="stFileUploader"] section div {{
+        background-color: transparent !important;
+    }}
+    
+    /* 3. Make the text and small instructions match your theme */
+    [data-testid="stFileUploader"] section span,
+    [data-testid="stFileUploader"] section small {{
+        color: var(--text-primary) !important;
+    }}
+    
+    /* 4. Fix the cloud icon so it has no black background */
+    [data-testid="stFileUploader"] section svg {{
+        fill: var(--text-primary) !important;
+        background-color: transparent !important;
+    }}
+    
+    /* 5. Style the Browse Files button */
+    [data-testid="stFileUploader"] button {{
+        background-color: var(--bg-secondary) !important;
+        border: 1px solid var(--border-bright) !important;
+        color: var(--text-primary) !important;
+    }}
+    
+    [data-testid="stFileUploader"] button:hover {{
+        border-color: var(--accent-green) !important;
+        color: var(--accent-green) !important;
+    }}
+    /* =========================================
+       FIX: CRUSH TOP GAPS & DEAD ZONES
+       ========================================= */
+    /* 1. Shrink the top padding of the main screen */
+    .block-container {{
+        padding-top: 0.5rem !important;
+    }}
+
+    /* 2. Shrink the top padding of the sidebar */
+    [data-testid="stSidebar"] > div:first-child {{
+        padding-top: 0.5rem !important;
+    }}
+
+    /* 3. Collapse the invisible Streamlit header completely */
+    header[data-testid="stHeader"] {{
+        height: 0px !important;
+        min-height: 0px !important;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
 
+# 2B. SECURE AUTHENTICATION
 # ============================================
+import streamlit_authenticator as stauth
+import time
+
+# 1. Initialize the tracker and timer in memory
+if 'login_attempts' not in st.session_state:
+    st.session_state.login_attempts = 0
+if 'lockout_time' not in st.session_state:
+    st.session_state.lockout_time = 0
+
+DEV_PASSWORD = "Rishabh_DevKey_2026"
+
+# 2. Set up the Authenticator configuration
+hashed_pass = stauth.Hasher.hash('Retainion123')
+
+credentials = {
+    "usernames": {
+        "Rishabh_admin": {
+            "email": "rishabh@retainion.com",
+            "name": "Rishabh singh",
+            "password": hashed_pass
+        }
+    }
+}
+
+authenticator = stauth.Authenticate(
+    credentials,
+    "retainion_dashboard",
+    "auth_cookie_key",
+    0 
+)
+
+# ============================================
+# THE VISUAL LOGIC SWITCH
+# ============================================
+if st.session_state.get("authentication_status"):
+    # IF LOGGED IN: Reset attempts and skip drawing the login UI entirely!
+    st.session_state.login_attempts = 0
+    
+else:
+    # IF NOT LOGGED IN: Draw the branded login screen
+    st.markdown("<br>", unsafe_allow_html=True)
+    _, text_col, _ = st.columns([1, 2, 1])
+
+    with text_col:
+        st.markdown("""
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="font-family: var(--font-display); font-size: 3.5rem; font-weight: 800; letter-spacing: 0.12em; color: var(--accent-green); line-height: 1.2; white-space: nowrap;">USERS</div>
+            <div style="font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; letter-spacing: 0.10em; color: var(--text-primary); line-height: 1.2; white-space: nowrap;">VERIFICATION LOGIN</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Handle the Lockout Timer UI
+        if st.session_state.login_attempts >= 3:
+            elapsed_time = time.time() - st.session_state.lockout_time
+            remaining_time = int(120 - elapsed_time)
+            
+            if remaining_time > 0:
+                import streamlit.components.v1 as components
+                
+                _, lock_col, _ = st.columns([1, 1.5, 1])
+                with lock_col:
+                    st.error("🔒 SYSTEM LOCKED: Too many failed attempts.")
+                    
+                    # 1. Automatic Live Countdown (Powered by JavaScript to prevent typing interruptions)
+                    timer_html = f"""
+                    <style>
+                        body {{ margin: 0; font-family: sans-serif; background-color: transparent; }}
+                        .warning-box {{
+                            border-left: 4px solid #f5a623;
+                            background-color: rgba(245, 166, 35, 0.1);
+                            color: #8a8fa8; 
+                            padding: 0.8rem 1rem;
+                            border-radius: 4px;
+                            font-size: 0.9rem;
+                        }}
+                        .highlight {{ color: #f5a623; font-family: monospace; font-size: 1.05rem; font-weight: bold; }}
+                    </style>
+                    <div class="warning-box">
+                        Please wait <span class="highlight" id="time">{remaining_time}</span><span class="highlight"> seconds</span> before trying again.
+                    </div>
+                    <script>
+                        let timeLeft = {remaining_time};
+                        const timerEl = document.getElementById('time');
+                        const countdown = setInterval(() => {{
+                            timeLeft--;
+                            if(timerEl) timerEl.innerText = timeLeft;
+                            if(timeLeft <= 0) {{
+                                clearInterval(countdown);
+                                window.parent.location.reload(); // Instantly reloads the page to unlock
+                            }}
+                        }}, 1000);
+                    </script>
+                    """
+                    components.html(timer_html, height=70)
+                    
+                    # 2. Developer Key Input 
+                    dev_input = st.text_input("Developer Key", type="password")
+                    
+                    # 3. Removed the "Refresh Timer" column entirely!
+                    if st.button("Unlock System", use_container_width=True):
+                        if dev_input == DEV_PASSWORD:
+                            st.session_state.login_attempts = 0
+                            st.session_state.lockout_time = 0
+                            st.session_state['authentication_status'] = None
+                            st.success("System unlocked! Refreshing...")
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error("Access Denied: Invalid Developer Key.")
+                st.stop()
+            else:
+                st.session_state.login_attempts = 0
+                st.session_state.lockout_time = 0
+                st.session_state['authentication_status'] = None
+
+        # Draw the Username/Password Input Boxes
+        _, form_col, _ = st.columns([1, 1.5, 1])
+        with form_col:
+            st.markdown("""
+            <style>
+            [data-testid="stFormSubmitButton"] { display: flex; justify-content: center; margin-top: 0.5rem; }
+            [data-testid="stFormSubmitButton"] button { width: 100% !important; max-width: 250px !important; }
+            </style>
+            """, unsafe_allow_html=True)
+
+            authenticator.login("main")
+            
+            # Fetch the status immediately after login attempt
+            auth_status = st.session_state.get("authentication_status")
+
+            if auth_status == False:
+                st.session_state.login_attempts += 1
+                if st.session_state.login_attempts >= 3:
+                    st.session_state.lockout_time = time.time()
+                    st.rerun()
+                else:
+                    attempts_left = 3 - st.session_state.login_attempts
+                    st.error(f"Incorrect password. {attempts_left} attempts remaining.")
+                    st.stop()
+                    
+            elif auth_status == None:
+                st.stop() 
+
+
 # 3. LOAD ARTIFACTS
-# ============================================
 @st.cache_resource
 def load_artifacts():
     if os.path.exists('models'):
@@ -608,28 +848,23 @@ def get_chart_colors():
         return {
             'paper_bgcolor': '#ffffff',
             'plot_bgcolor': '#f8f9fa',
-            'text_color': '#111827',     # Strong dark text for light mode
-            'grid_color': '#d1d5db',     # Darker grid lines
-            'secondary_text': '#4b5563'  # Muted secondary text
+            'text_color': '#111827',     
+            'grid_color': '#d1d5db',     
+            'secondary_text': '#4b5563'  
         }
     else:  # Dark Mode
         return {
             'paper_bgcolor': '#07080d',
             'plot_bgcolor': '#0d0f18',
-            'text_color': '#b4b9c7',     # Slightly darker, muted text (instead of bright white)
-            'grid_color': '#10121a',     # Much darker, almost invisible grid lines
-            'secondary_text': '#6b7086'  # Muted axis titles (instead of neon green)
+            'text_color': '#b4b9c7',     
+            'grid_color': '#10121a',     
+            'secondary_text': '#6b7086'  
         }
 
 def get_chart_height(default_height=400):
     """Returns responsive chart height - smaller for mobile"""
-    # Inject JavaScript to detect screen width
     is_mobile = st.query_params.get("mobile", "false") == "true"
-    
-    # You can also use streamlit-javascript if installed, but for simplicity:
-    # Mobile screens typically < 768px
-    # This is a simple approach - charts will be slightly smaller on all devices
-    # For true detection, you'd need streamlit-javascript or similar
+
     return default_height
 
 # Add mobile detection script
@@ -742,6 +977,13 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
+    # Fetch the logged-in user's name from memory
+    current_user_name = st.session_state.get("name", "User")
+
+    # Secure Logout Button
+    authenticator.logout("Logout", "sidebar")
+    st.markdown(f"<span style='color:var(--text-muted); font-size: 0.8rem;'>Logged in as: **{current_user_name}**</span>", unsafe_allow_html=True)
+
 # Theme Toggle Switch
     def update_theme():
         st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
@@ -756,7 +998,8 @@ with st.sidebar:
          "2. AI Chat Analyst",
          "3. Risk Overview",
          "4. At-Risk Customers",
-         "5. Executive Brief"],
+         "5. Executive Brief",
+         "6. Batch Scorer"],
         label_visibility="collapsed"
     )
 
@@ -1415,3 +1658,89 @@ Executive tone. Data-driven. No bullet points."""
             height=280
         )
         st.plotly_chart(fig_b, use_container_width=True, theme=None)
+
+        # ============================================
+# PAGE 6 — BATCH SCORER
+# ============================================
+elif page == "6. Batch Scorer":
+    st.markdown("""
+    <div class="page-header">
+        <span class="page-title">Batch Scorer</span>
+        <span class="page-tag">Pipeline</span>
+    </div>
+    <div class="page-subtitle">Upload raw customer data to generate bulk retention scores</div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="section-label">Data Ingestion Pipeline</div>', unsafe_allow_html=True)
+
+    # The Streamlit Drag-and-Drop widget
+    uploaded_file = st.file_uploader("Upload a CSV file to begin bulk scoring", type=['csv'])
+
+    if uploaded_file is not None:
+        try:
+            # Read the uploaded file into Pandas
+            batch_df = pd.read_csv(uploaded_file)
+            
+            st.success(f"Successfully loaded {len(batch_df):,} customer records. Initializing XGBoost scoring pipeline...")
+            
+            # --- FEATURE MATCHING ---
+            # Create a copy to hold our model-ready features
+            score_df = batch_df.copy()
+            
+            # Check for missing columns and fill them with 0 so the model doesn't crash
+            missing_cols = set(feature_names) - set(score_df.columns)
+            for c in missing_cols:
+                score_df[c] = 0
+                
+            # Keep only the exact columns the model was trained on, in the exact right order
+            X_batch = score_df[feature_names].fillna(0)
+            
+            # --- BATCH PREDICTION ---
+            with st.spinner("Scoring thousands of records..."):
+                # Run the entire dataframe through the model at once!
+                batch_probs = model.predict_proba(X_batch)[:, 1]
+                
+            # Attach the new AI scores back to the original uploaded data
+            batch_df['Churn_Probability'] = batch_probs
+            batch_df['Risk_Level'] = pd.cut(
+                batch_probs,
+                bins=[0, 0.4, 0.7, 1.0],
+                labels=['LOW', 'MEDIUM', 'HIGH']
+            )
+            
+            # Sort so the highest risk customers are at the very top
+            batch_df = batch_df.sort_values('Churn_Probability', ascending=False)
+            
+            # --- UI REPORT ---
+            st.markdown('<div class="section-label">Scoring Results</div>', unsafe_allow_html=True)
+            
+            # Calculate summary metrics
+            high_risk_batch = (batch_df['Risk_Level'] == 'HIGH').sum()
+            avg_risk_batch = batch_df['Churn_Probability'].mean()
+            
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.metric("Total Scored", f"{len(batch_df):,}")
+            with c2:
+                st.metric("High Risk Identified", f"{high_risk_batch:,}")
+            with c3:
+                st.metric("Average Churn Risk", f"{avg_risk_batch:.1%}")
+            
+            # Display the freshly scored data
+            st.dataframe(batch_df.head(len(batch_df)), use_container_width=True)
+            
+            # --- DOWNLOAD BUTTON ---
+            st.markdown('<div class="section-label">Export Intelligence</div>', unsafe_allow_html=True)
+            
+            csv_export = batch_df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="◈ Download Scored Dataset (CSV)",
+                data=csv_export,
+                file_name="retainion_batch_scored.csv",
+                mime="text/csv",
+                type="primary",
+                use_container_width=True
+            )
+            
+        except Exception as e:
+            st.error(f"Pipeline Error: {e}")
