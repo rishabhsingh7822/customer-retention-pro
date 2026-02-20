@@ -203,7 +203,32 @@ header[data-testid="stHeader"] {{
 .ai-stream-box {{ background: var(--bg-secondary); border: 2px solid var(--border-bright); border-left: 4px solid var(--accent-green); padding: 1.2rem 1.4rem; font-family: var(--font-body); font-size: 0.88rem; line-height: 1.65; color: var(--text-primary); border-radius: 0 4px 4px 0; min-height: 80px; }}
 
 [data-testid="stChatMessage"] {{ background: var(--bg-card) !important; border: 2px solid var(--border) !important; border-radius: 4px !important; font-family: var(--font-body) !important; }}
-[data-testid="stChatInput"] textarea {{ font-family: var(--font-mono) !important; font-size: 0.82rem !important; background: var(--bg-card) !important; border: 2px solid var(--border-bright) !important; color: var(--text-primary) !important; }}
+/* Fix Chat Input Background and Blinking Cursor */
+[data-testid="stChatInput"] > div,
+[data-testid="stChatInput"] div[data-baseweb="base-input"] {{
+    background-color: var(--bg-card) !important;
+}}
+[data-testid="stChatInput"] textarea {{ 
+    font-family: var(--font-mono) !important; 
+    font-size: 0.82rem !important; 
+    background-color: var(--bg-card) !important; 
+    color: var(--text-primary) !important; 
+    border: 2px solid var(--border-bright) !important; 
+    caret-color: var(--accent-green) !important; /* Forces cursor to be visible and green */
+}}
+[data-testid="stChatInput"] textarea::placeholder {{
+    color: var(--text-muted) !important; /* Ensures placeholder text is legible */
+}}
+
+/* Fix AI Markdown Inline Code (Numbers and Highlights) */
+p code, li code, .ai-stream-box code, [data-testid="stChatMessage"] code {{
+    background-color: var(--bg-elevated) !important;
+    color: var(--accent-green) !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-family: var(--font-mono) !important;
+    font-size: 0.9em !important;
+}}
 
 .badge {{ display: inline-block; font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 4px 9px; border-radius: 3px; }}
 .badge-high    {{ background: rgba(214,48,49,0.2);  color: var(--accent-red);   border: 2px solid var(--accent-red);  }}
@@ -718,13 +743,10 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # Theme Toggle Switch
-    is_light = st.toggle("Light Mode", value=(st.session_state.theme == "light"))
-    new_theme = "light" if is_light else "dark"
-    
-    # Update session state if changed
-    if new_theme != st.session_state.theme:
-        st.session_state.theme = new_theme
-        st.rerun()
+    def update_theme():
+        st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
+
+    st.toggle("Light Mode", value=(st.session_state.theme == "light"), on_change=update_theme)
     
     st.markdown("<br>", unsafe_allow_html=True)
 
