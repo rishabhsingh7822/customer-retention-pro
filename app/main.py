@@ -20,13 +20,32 @@ st.set_page_config(
 )
 
 # ============================================
+# 1B. THEME STATE
+# ============================================
+if 'theme' not in st.session_state:
+    st.session_state.theme = "dark"
+
+# ============================================
 # 2. DESIGN SYSTEM 
 # ============================================
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Barlow+Condensed:wght@300;400;600;700;800&family=Barlow:wght@300;400;500&display=swap');
-
-:root {
+if st.session_state.theme == "light":
+    css_colors = """
+    --bg-primary:    #ffffff;
+    --bg-secondary:  #f8f9fa;
+    --bg-card:       #ffffff;
+    --bg-elevated:   #f1f3f5;
+    --accent-green:  #00aa00;
+    --accent-amber:  #e67e00;
+    --accent-red:    #d63031;
+    --accent-blue:   #0066cc;
+    --text-primary:  #000000;
+    --text-secondary:#2d3436;
+    --text-muted:    #636e72;
+    --border:        #2d3436;
+    --border-bright: #000000;
+    """
+else:  # Dark Mode
+    css_colors = """
     --bg-primary:    #07080d;
     --bg-secondary:  #0d0f18;
     --bg-card:       #0f1119;
@@ -40,98 +59,458 @@ st.markdown("""
     --text-muted:    #4a4f63;
     --border:        #1c1f2e;
     --border-bright: #2a2f45;
+    """
+
+st.markdown(f"""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Barlow+Condensed:wght@300;400;600;700;800&family=Barlow:wght@300;400;500&display=swap');
+
+:root {{
+    {css_colors}
     --font-display:  'Barlow Condensed', sans-serif;
     --font-mono:     'IBM Plex Mono', monospace;
     --font-body:     'Barlow', sans-serif;
-}
+}}
 
-html, body, [class*="css"] {
+/* Target modern Streamlit classes and all text elements to fix invisible text */
+html, body, [class*="css"], [class*="st-"], p, span, h1, h2, h3, h4, h5, h6, li, label {{
     font-family: var(--font-body) !important;
-    background-color: var(--bg-primary) !important;
     color: var(--text-primary) !important;
-}
+}}
 
-#MainMenu, footer, header { visibility: hidden; }
-.block-container { padding: 1.5rem 2rem !important; max-width: 100% !important; }
+/* Force background colors on all Streamlit containers */
+.main, .block-container, [data-testid="stAppViewContainer"], 
+[data-testid="stHeader"], .stApp {{
+    background-color: var(--bg-primary) !important;
+}}
 
-[data-testid="stSidebar"] { background: var(--bg-secondary) !important; border-right: 1px solid var(--border) !important; }
-[data-testid="stSidebar"] > div:first-child { padding-top: 1.5rem; }
+/* Column backgrounds */
+[data-testid="column"] {{
+    background-color: var(--bg-primary) !important;
+}}
 
-.sidebar-brand {
+/* Ensure all input containers have proper background */
+[data-testid="stVerticalBlock"] > div {{
+    background-color: transparent !important;
+}}
+
+/* Form elements background */
+[data-testid="stForm"] {{
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    padding: 1rem !important;
+    border-radius: 4px !important;
+}}
+
+#MainMenu, footer {{ visibility: hidden; }}
+header {{ background: transparent !important; }}
+.block-container {{ padding: 1.5rem 2rem !important; max-width: 100% !important; }}
+
+[data-testid="stSidebar"] {{ background: var(--bg-secondary) !important; border-right: 2px solid var(--border) !important; }}
+[data-testid="stSidebar"] > div:first-child {{ padding-top: 1.5rem; }}
+
+/* Header area where toggle button lives */
+header[data-testid="stHeader"] {{
+    background: transparent !important;
+}}
+
+/* Ensure buttons are always visible and above other elements */
+[data-testid="stSidebarNav"] {{
+    z-index: 999998 !important;
+}}
+
+.sidebar-brand {{
     font-family: var(--font-display);
     font-size: 1.4rem; font-weight: 800; letter-spacing: 0.15em;
     color: var(--accent-green); text-transform: uppercase;
-    padding: 0 1rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem;
-}
-.sidebar-brand span { color: var(--text-secondary); font-weight: 300; }
+    padding: 0 1rem 1rem; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem;
+}}
+.sidebar-brand span {{ color: var(--text-secondary); font-weight: 300; }}
 
-[data-testid="stRadio"] label {
+.visibility-selector {{
+    background: var(--bg-card);
+    border: 2px solid var(--border-bright);
+    padding: 0.8rem;
+    margin: 0 1rem 1.5rem;
+    border-radius: 6px;
+}}
+.visibility-label {{
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    display: block;
+    margin-bottom: 0.5rem;
+}}
+
+[data-testid="stRadio"] label {{
     font-family: var(--font-mono) !important; font-size: 0.75rem !important;
-    letter-spacing: 0.08em !important; color: var(--text-secondary) !important; text-transform: uppercase !important;
-}
-[data-testid="stRadio"] div[data-baseweb="radio"] div { background: transparent !important; border: none !important; }
+    letter-spacing: 0.08em !important; color: var(--text-primary) !important; 
+    font-weight: 500 !important; text-transform: uppercase !important;
+}}
+[data-testid="stRadio"] div[data-baseweb="radio"] div {{ background: transparent !important; border: none !important; }}
 
-.stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 1rem; border-top: 1px solid var(--border); margin-top: 1rem; }
-.stat-pill { background: var(--bg-card); border: 1px solid var(--border); padding: 8px 10px; border-radius: 4px; }
-.stat-pill .label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 2px; }
-.stat-pill .value { font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; color: var(--accent-green); }
+.stat-row {{ display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 1rem; border-top: 2px solid var(--border); margin-top: 1rem; }}
+.stat-pill {{ background: var(--bg-card); border: 2px solid var(--border); padding: 8px 10px; border-radius: 4px; }}
+.stat-pill .label {{ font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 2px; }}
+.stat-pill .value {{ font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; color: var(--accent-green); }}
 
-.page-header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.25rem; }
-.page-title { font-family: var(--font-display); font-size: 2.8rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-primary); line-height: 1; }
-.page-tag { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-green); letter-spacing: 0.15em; text-transform: uppercase; border: 1px solid var(--accent-green); padding: 3px 8px; border-radius: 2px; }
-.page-subtitle { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.08em; margin-bottom: 1.5rem; text-transform: uppercase; }
+.page-header {{ display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.25rem; }}
+.page-title {{ font-family: var(--font-display); font-size: 2.8rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-primary); line-height: 1; }}
+.page-tag {{ font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-green); letter-spacing: 0.15em; text-transform: uppercase; border: 2px solid var(--accent-green); padding: 3px 8px; border-radius: 2px; font-weight: 600; }}
+.page-subtitle {{ font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.08em; margin-bottom: 1.5rem; text-transform: uppercase; }}
 
-.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 1.5rem; }
-.kpi-card { background: var(--bg-card); padding: 1.2rem 1.4rem; position: relative; overflow: hidden; }
-.kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent-color, var(--accent-green)); }
-.kpi-label { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.5rem; display: block; }
-.kpi-value { font-family: var(--font-mono); font-size: 1.9rem; font-weight: 600; color: var(--text-primary); line-height: 1; display: block; }
-.kpi-sub { font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); margin-top: 4px; display: block; }
+.kpi-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; background: var(--border-bright); border: 2px solid var(--border-bright); margin-bottom: 1.5rem; }}
+.kpi-card {{ background: var(--bg-card); padding: 1.2rem 1.4rem; position: relative; overflow: hidden; }}
+.kpi-card::before {{ content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent-color, var(--accent-green)); }}
+.kpi-label {{ font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.5rem; display: block; }}
+.kpi-value {{ font-family: var(--font-mono); font-size: 1.9rem; font-weight: 700; color: var(--text-primary); line-height: 1; display: block; }}
+.kpi-sub {{ font-family: var(--font-mono); font-size: 0.62rem; color: var(--text-muted); margin-top: 4px; display: block; }}
 
-.section-label { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.2em; padding: 0.8rem 0 0.4rem; border-top: 1px solid var(--border); margin: 1rem 0 0.8rem; display: flex; align-items: center; gap: 8px; }
-.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.section-label {{ font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.2em; padding: 0.8rem 0 0.4rem; border-top: 2px solid var(--border); margin: 1rem 0 0.8rem; display: flex; align-items: center; gap: 8px; font-weight: 600; }}
+.section-label::after {{ content: ''; flex: 1; height: 2px; background: var(--border); }}
 
-[data-testid="stDataFrame"] { border: 1px solid var(--border) !important; }
-[data-testid="stDataFrame"] th { background: var(--bg-secondary) !important; font-family: var(--font-mono) !important; font-size: 0.65rem !important; text-transform: uppercase !important; letter-spacing: 0.1em !important; color: var(--text-muted) !important; }
-[data-testid="stDataFrame"] td { font-family: var(--font-mono) !important; font-size: 0.78rem !important; }
+[data-testid="stDataFrame"] {{ border: 2px solid var(--border-bright) !important; }}
+[data-testid="stDataFrame"] th {{ background: var(--bg-secondary) !important; font-family: var(--font-mono) !important; font-size: 0.65rem !important; text-transform: uppercase !important; letter-spacing: 0.1em !important; color: var(--text-primary) !important; font-weight: 600 !important; }}
+[data-testid="stDataFrame"] td {{ font-family: var(--font-mono) !important; font-size: 0.78rem !important; color: var(--text-primary) !important; }}
 
-[data-testid="stButton"] > button { font-family: var(--font-mono) !important; font-size: 0.72rem !important; font-weight: 500 !important; text-transform: uppercase !important; letter-spacing: 0.12em !important; background: transparent !important; color: var(--accent-green) !important; border: 1px solid var(--accent-green) !important; border-radius: 2px !important; padding: 0.5rem 1.2rem !important; transition: all 0.15s ease !important; }
-[data-testid="stButton"] > button:hover { background: var(--accent-green) !important; color: var(--bg-primary) !important; }
-[data-testid="stButton"] > button[kind="primary"] { background: var(--accent-green) !important; color: var(--bg-primary) !important; font-weight: 600 !important; }
-[data-testid="stButton"] > button[kind="primary"]:hover { opacity: 0.85 !important; }
+[data-testid="stButton"] > button {{ font-family: var(--font-mono) !important; font-size: 0.72rem !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.12em !important; background: transparent !important; color: var(--accent-green) !important; border: 2px solid var(--accent-green) !important; border-radius: 2px !important; padding: 0.5rem 1.2rem !important; transition: all 0.15s ease !important; }}
+[data-testid="stButton"] > button:hover {{ background: var(--accent-green) !important; color: var(--bg-primary) !important; }}
+[data-testid="stButton"] > button[kind="primary"] {{ background: var(--accent-green) !important; color: var(--bg-primary) !important; font-weight: 700 !important; }}
+[data-testid="stButton"] > button[kind="primary"]:hover {{ opacity: 0.85 !important; }}
 
-[data-testid="stSlider"] label { font-family: var(--font-mono) !important; font-size: 0.7rem !important; color: var(--text-secondary) !important; text-transform: uppercase !important; letter-spacing: 0.08em !important; }
-.stSlider > div > div > div > div { background: var(--accent-green) !important; }
+[data-testid="stSlider"] label {{ font-family: var(--font-mono) !important; font-size: 0.7rem !important; color: var(--text-primary) !important; text-transform: uppercase !important; letter-spacing: 0.08em !important; font-weight: 600 !important; }}
+.stSlider > div > div > div > div {{ background: var(--accent-green) !important; }}
 
-[data-testid="stNumberInput"] label, [data-testid="stSelectbox"] label { font-family: var(--font-mono) !important; font-size: 0.7rem !important; color: var(--text-secondary) !important; text-transform: uppercase !important; letter-spacing: 0.08em !important; }
+[data-testid="stNumberInput"] label, [data-testid="stSelectbox"] label {{ font-family: var(--font-mono) !important; font-size: 0.7rem !important; color: var(--text-primary) !important; text-transform: uppercase !important; letter-spacing: 0.08em !important; font-weight: 600 !important; }}
 
-.ai-stream-box { background: var(--bg-secondary); border: 1px solid var(--border-bright); border-left: 3px solid var(--accent-green); padding: 1.2rem 1.4rem; font-family: var(--font-body); font-size: 0.88rem; line-height: 1.65; color: var(--text-primary); border-radius: 0 4px 4px 0; min-height: 80px; }
+/* Input boxes background */
+[data-testid="stNumberInput"] input,
+[data-testid="stTextInput"] input {{
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-bright) !important;
+    color: var(--text-primary) !important;
+}}
 
-[data-testid="stChatMessage"] { background: var(--bg-card) !important; border: 1px solid var(--border) !important; border-radius: 4px !important; font-family: var(--font-body) !important; }
-[data-testid="stChatInput"] textarea { font-family: var(--font-mono) !important; font-size: 0.82rem !important; background: var(--bg-card) !important; border: 1px solid var(--border-bright) !important; color: var(--text-primary) !important; }
+/* Select box background */
+[data-baseweb="select"] > div {{
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-bright) !important;
+    color: var(--text-primary) !important;
+}}
 
-.badge { display: inline-block; font-family: var(--font-mono); font-size: 0.6rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; }
-.badge-high    { background: rgba(255,61,87,0.15);  color: var(--accent-red);   border: 1px solid rgba(255,61,87,0.3);  }
-.badge-medium { background: rgba(245,166,35,0.15); color: var(--accent-amber); border: 1px solid rgba(245,166,35,0.3); }
-.badge-low    { background: rgba(0,229,160,0.1);   color: var(--accent-green); border: 1px solid rgba(0,229,160,0.25); }
+.ai-stream-box {{ background: var(--bg-secondary); border: 2px solid var(--border-bright); border-left: 4px solid var(--accent-green); padding: 1.2rem 1.4rem; font-family: var(--font-body); font-size: 0.88rem; line-height: 1.65; color: var(--text-primary); border-radius: 0 4px 4px 0; min-height: 80px; }}
 
-.shap-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 0.72rem; }
-.shap-feature { color: var(--text-secondary); flex: 1; }
-.shap-value   { color: var(--text-primary); font-weight: 500; width: 60px; text-align: right; }
-.shap-bar-wrap { width: 80px; background: var(--bg-elevated); height: 4px; border-radius: 2px; }
-.shap-bar-pos  { height: 100%; border-radius: 2px; background: var(--accent-red); }
-.shap-bar-neg  { height: 100%; border-radius: 2px; background: var(--accent-green); }
+[data-testid="stChatMessage"] {{ background: var(--bg-card) !important; border: 2px solid var(--border) !important; border-radius: 4px !important; font-family: var(--font-body) !important; }}
+[data-testid="stChatInput"] textarea {{ font-family: var(--font-mono) !important; font-size: 0.82rem !important; background: var(--bg-card) !important; border: 2px solid var(--border-bright) !important; color: var(--text-primary) !important; }}
 
-[data-testid="stExpander"] { background: var(--bg-card) !important; border: 1px solid var(--border) !important; border-radius: 4px !important; }
-[data-testid="stExpander"] summary { font-family: var(--font-mono) !important; font-size: 0.72rem !important; text-transform: uppercase !important; letter-spacing: 0.1em !important; color: var(--text-secondary) !important; }
+.badge {{ display: inline-block; font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 4px 9px; border-radius: 3px; }}
+.badge-high    {{ background: rgba(214,48,49,0.2);  color: var(--accent-red);   border: 2px solid var(--accent-red);  }}
+.badge-medium {{ background: rgba(230,126,0,0.2); color: var(--accent-amber); border: 2px solid var(--accent-amber); }}
+.badge-low    {{ background: rgba(0,170,0,0.15);   color: var(--accent-green); border: 2px solid var(--accent-green); }}
 
-[data-baseweb="select"] { background: var(--bg-card) !important; border-color: var(--border-bright) !important; font-family: var(--font-mono) !important; font-size: 0.78rem !important; }
+.shap-row {{ display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 2px solid var(--border); font-family: var(--font-mono); font-size: 0.72rem; }}
+.shap-feature {{ color: var(--text-primary); flex: 1; font-weight: 500; }}
+.shap-value   {{ color: var(--text-primary); font-weight: 700; width: 60px; text-align: right; }}
+.shap-bar-wrap {{ width: 80px; background: var(--bg-elevated); height: 6px; border-radius: 3px; border: 1px solid var(--border); }}
+.shap-bar-pos  {{ height: 100%; border-radius: 3px; background: var(--accent-red); }}
+.shap-bar-neg  {{ height: 100%; border-radius: 3px; background: var(--accent-green); }}
 
-[data-testid="stInfo"] { background: rgba(77,156,255,0.07) !important; border: 1px solid rgba(77,156,255,0.2) !important; border-left: 3px solid var(--accent-blue) !important; font-family: var(--font-body) !important; font-size: 0.84rem !important; border-radius: 0 4px 4px 0 !important; }
+[data-testid="stExpander"] {{ background: var(--bg-card) !important; border: 2px solid var(--border) !important; border-radius: 4px !important; }}
+[data-testid="stExpander"] summary {{ font-family: var(--font-mono) !important; font-size: 0.72rem !important; text-transform: uppercase !important; letter-spacing: 0.1em !important; color: var(--text-primary) !important; font-weight: 600 !important; }}
 
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: var(--bg-secondary); }
-::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+[data-baseweb="select"] {{ background: var(--bg-card) !important; border: 2px solid var(--border-bright) !important; font-family: var(--font-mono) !important; font-size: 0.78rem !important; color: var(--text-primary) !important; }}
+
+[data-testid="stInfo"] {{ background: rgba(77,156,255,0.1) !important; border: 2px solid var(--accent-blue) !important; border-left: 4px solid var(--accent-blue) !important; font-family: var(--font-body) !important; font-size: 0.84rem !important; border-radius: 0 4px 4px 0 !important; }}
+
+::-webkit-scrollbar {{ width: 6px; height: 6px; }}
+::-webkit-scrollbar-track {{ background: var(--bg-secondary); }}
+::-webkit-scrollbar-thumb {{ background: var(--border-bright); border-radius: 3px; }}
+::-webkit-scrollbar-thumb:hover {{ background: var(--text-muted); }}
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
+@media screen and (max-width: 768px) {{
+    /* Container adjustments */
+    .block-container {{ 
+        padding: 1rem 0.75rem !important; 
+    }}
+    
+    /* Header scaling */
+    .page-title {{ 
+        font-size: 1.8rem !important; 
+        line-height: 1.1 !important;
+    }}
+    .page-tag {{ 
+        font-size: 0.6rem !important; 
+        padding: 2px 6px !important;
+    }}
+    .page-subtitle {{ 
+        font-size: 0.65rem !important; 
+        margin-bottom: 1rem !important;
+    }}
+    
+    /* KPI Grid - 2 columns on mobile */
+    .kpi-grid {{ 
+        grid-template-columns: repeat(2, 1fr) !important; 
+        gap: 1px !important;
+    }}
+    .kpi-card {{ 
+        padding: 1rem 1rem !important; 
+    }}
+    .kpi-label {{ 
+        font-size: 0.58rem !important; 
+        margin-bottom: 0.4rem !important;
+    }}
+    .kpi-value {{ 
+        font-size: 1.5rem !important; 
+    }}
+    .kpi-sub {{ 
+        font-size: 0.58rem !important; 
+    }}
+    
+    /* Sidebar brand */
+    .sidebar-brand {{ 
+        font-size: 1.1rem !important; 
+        padding: 0 0.75rem 0.75rem !important;
+    }}
+    
+    /* Visibility selector */
+    .visibility-selector {{ 
+        padding: 0.6rem !important; 
+        margin: 0 0.75rem 1rem !important;
+    }}
+    .visibility-label {{ 
+        font-size: 0.6rem !important; 
+    }}
+    
+    /* Radio buttons - larger touch targets */
+    [data-testid="stRadio"] label {{ 
+        font-size: 0.7rem !important; 
+        padding: 0.5rem 0 !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+    }}
+    
+    /* Stat pills in sidebar - 1 column */
+    .stat-row {{ 
+        grid-template-columns: 1fr !important; 
+        gap: 4px !important;
+        padding: 0.75rem !important;
+    }}
+    .stat-pill {{ 
+        padding: 10px 12px !important; 
+    }}
+    .stat-pill .label {{ 
+        font-size: 0.58rem !important; 
+    }}
+    .stat-pill .value {{ 
+        font-size: 0.95rem !important; 
+    }}
+    
+    /* Section labels */
+    .section-label {{ 
+        font-size: 0.6rem !important; 
+        padding: 0.6rem 0 0.3rem !important;
+        margin: 0.75rem 0 0.6rem !important;
+    }}
+    
+    /* Buttons - larger touch targets */
+    [data-testid="stButton"] > button {{ 
+        font-size: 0.68rem !important; 
+        padding: 0.65rem 1rem !important;
+        min-height: 44px !important;
+    }}
+    
+    /* Forms and inputs - larger touch targets */
+    [data-testid="stNumberInput"] input,
+    [data-testid="stSelectbox"] select,
+    [data-testid="stSlider"] {{ 
+        min-height: 44px !important;
+        font-size: 0.85rem !important;
+    }}
+    
+    [data-testid="stNumberInput"] label,
+    [data-testid="stSelectbox"] label,
+    [data-testid="stSlider"] label {{ 
+        font-size: 0.68rem !important; 
+    }}
+    
+    /* Tables */
+    [data-testid="stDataFrame"] th {{ 
+        font-size: 0.6rem !important; 
+        padding: 8px 4px !important;
+    }}
+    [data-testid="stDataFrame"] td {{ 
+        font-size: 0.72rem !important; 
+        padding: 8px 4px !important;
+    }}
+    
+    /* AI stream box */
+    .ai-stream-box {{ 
+        padding: 1rem 1rem !important; 
+        font-size: 0.82rem !important;
+        line-height: 1.6 !important;
+    }}
+    
+    /* Chat interface */
+    [data-testid="stChatMessage"] {{ 
+        padding: 0.75rem !important; 
+        font-size: 0.82rem !important;
+    }}
+    [data-testid="stChatInput"] textarea {{ 
+        font-size: 0.85rem !important; 
+        min-height: 44px !important;
+    }}
+    
+    /* Badges */
+    .badge {{ 
+        font-size: 0.58rem !important; 
+        padding: 4px 8px !important;
+    }}
+    
+    /* SHAP visualization */
+    .shap-row {{ 
+        font-size: 0.68rem !important; 
+        padding: 8px 0 !important;
+        flex-wrap: wrap !important;
+    }}
+    .shap-feature {{ 
+        flex: 0 0 100% !important;
+        margin-bottom: 4px !important;
+    }}
+    .shap-value {{ 
+        width: 50px !important; 
+    }}
+    .shap-bar-wrap {{ 
+        width: 60px !important; 
+        height: 8px !important;
+    }}
+    
+    /* Expanders */
+    [data-testid="stExpander"] summary {{ 
+        font-size: 0.68rem !important; 
+        padding: 0.75rem !important;
+        min-height: 44px !important;
+    }}
+}}
+
+/* Tablet adjustments (768px - 1024px) */
+@media screen and (min-width: 769px) and (max-width: 1024px) {{
+    .page-title {{ 
+        font-size: 2.2rem !important; 
+    }}
+    
+    /* KPI Grid - 2 columns on tablet */
+    .kpi-grid {{ 
+        grid-template-columns: repeat(2, 1fr) !important; 
+    }}
+    
+    .kpi-card {{ 
+        padding: 1.1rem 1.2rem !important; 
+    }}
+    
+    .kpi-value {{ 
+        font-size: 1.7rem !important; 
+    }}
+}}
+/* =========================================
+       PROTECT UI ICONS & DATAFRAME ARROWS
+       ========================================= */
+    /* 1. Restore the original font for all Streamlit UI icons */
+    .material-symbols-rounded, .material-icons, [class*="icon"], [class*="stIcon"] {{
+        font-family: 'Material Symbols Rounded', 'Material Icons' !important;
+    }}
+    
+    /* 2. Ensure DataFrame sorting arrows and UI SVGs don't disappear into the background */
+    svg {{
+        fill: var(--text-primary) !important;
+    }}
+    
+    /* 3. Make DataFrame headers specifically pop in all modes */
+    [data-testid="stDataFrame"] th {{
+        border-bottom: 2px solid var(--accent-green) !important;
+    }}
+    
+    /* 4. Ensure Dropdown/Selectbox arrows are visible */
+    [data-baseweb="select"] svg {{
+        fill: var(--text-primary) !important;
+    }}
+    /* =========================================
+       FIX: SIDEBAR TOGGLE & VISIBILITY (V7 MAX-SPECIFICITY)
+       ========================================= */
+    header {{ 
+        visibility: visible !important; 
+        background: transparent !important;
+        z-index: 99999 !important; 
+    }}
+    #MainMenu, footer {{ 
+        visibility: hidden !important; 
+    }}
+    
+    /* 1. Lock the hitbox size and physically throw native text off-screen */
+    html body div[data-testid="stSidebarCollapseButton"],
+    html body div[data-testid="collapsedControl"] {{
+        position: relative !important;
+        width: 3rem !important;
+        height: 3rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: transparent !important;
+        border: none !important;
+        color: transparent !important;
+        text-indent: -9999px !important; /* Throw text off screen */
+        overflow: hidden !important;
+    }}
+    
+    /* 2. MAX SPECIFICITY: Target ONLY the visual spans/icons and nuke them. 
+          We avoid '*' so we don't accidentally delete Streamlit's click listener */
+    html body div[data-testid="stSidebarCollapseButton"] span,
+    html body div[data-testid="stSidebarCollapseButton"] svg,
+    html body div[data-testid="stSidebarCollapseButton"] i,
+    html body div[data-testid="collapsedControl"] span,
+    html body div[data-testid="collapsedControl"] svg,
+    html body div[data-testid="collapsedControl"] i {{
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }}
+    
+    /* 3. Inject the UNHIDE ICON (Sleek right arrow) */
+    html body div[data-testid="collapsedControl"]::after {{
+        content: "❯" !important; 
+        font-size: 1.6rem !important;
+        color: var(--text-primary) !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        pointer-events: none !important; 
+        text-indent: 0 !important; /* Pull the icon back on-screen */
+        visibility: visible !important;
+    }}
+    
+    /* 4. Inject X to HIDE */
+    html body div[data-testid="stSidebarCollapseButton"]::after {{
+        content: "✖" !important; 
+        font-size: 1.2rem !important; 
+        color: var(--text-muted) !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        pointer-events: none !important; 
+        text-indent: 0 !important; /* Pull the icon back on-screen */
+        visibility: visible !important;
+    }}
+    
+    html body div[data-testid="stSidebarCollapseButton"]:hover::after {{
+        color: var(--accent-red) !important;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -194,6 +573,43 @@ def configure_ai():
 # Initialize AI Client
 client = configure_ai()
 ai_active = client is not None
+
+# ============================================
+# 4B. CHART COLOR HELPER
+# ============================================
+def get_chart_colors():
+    """Returns appropriate chart colors based on current theme"""
+    if st.session_state.theme == "light":
+        return {
+            'paper_bgcolor': '#ffffff',
+            'plot_bgcolor': '#f8f9fa',
+            'text_color': '#111827',     # Strong dark text for light mode
+            'grid_color': '#d1d5db',     # Darker grid lines
+            'secondary_text': '#4b5563'  # Muted secondary text
+        }
+    else:  # Dark Mode
+        return {
+            'paper_bgcolor': '#07080d',
+            'plot_bgcolor': '#0d0f18',
+            'text_color': '#b4b9c7',     # Slightly darker, muted text (instead of bright white)
+            'grid_color': '#10121a',     # Much darker, almost invisible grid lines
+            'secondary_text': '#6b7086'  # Muted axis titles (instead of neon green)
+        }
+
+def get_chart_height(default_height=400):
+    """Returns responsive chart height - smaller for mobile"""
+    # Inject JavaScript to detect screen width
+    is_mobile = st.query_params.get("mobile", "false") == "true"
+    
+    # You can also use streamlit-javascript if installed, but for simplicity:
+    # Mobile screens typically < 768px
+    # This is a simple approach - charts will be slightly smaller on all devices
+    # For true detection, you'd need streamlit-javascript or similar
+    return default_height
+
+# Add mobile detection script
+st.markdown("""
+""", unsafe_allow_html=True)
 
 # ============================================
 # 5. AI HELPERS
@@ -300,6 +716,17 @@ with st.sidebar:
         CHURN ANALYSIS DASHBOARD <span>// AI</span>
     </div>
     """, unsafe_allow_html=True)
+
+# Theme Toggle Switch
+    is_light = st.toggle("Light Mode", value=(st.session_state.theme == "light"))
+    new_theme = "light" if is_light else "dark"
+    
+    # Update session state if changed
+    if new_theme != st.session_state.theme:
+        st.session_state.theme = new_theme
+        st.rerun()
+    
+    st.markdown("<br>", unsafe_allow_html=True)
 
     page = st.radio(
         "",
@@ -429,6 +856,10 @@ if page == "1. Live Predictor":
 
         # 3D Chart
         st.markdown('<div class="section-label">Vector Space</div>', unsafe_allow_html=True)
+        
+        # Get dynamic colors
+        chart_colors = get_chart_colors()
+        
         fig = go.Figure()
         
         # Trace 0 -> Renamed to "Current Customer"
@@ -458,8 +889,8 @@ if page == "1. Live Predictor":
         ))
         
         fig.update_layout(
-            paper_bgcolor="#07080d", 
-            plot_bgcolor="#07080d",
+            paper_bgcolor=chart_colors['paper_bgcolor'], 
+            plot_bgcolor=chart_colors['plot_bgcolor'],
             
             # --- MOVED LEGEND TO BOTTOM RIGHT ---
             legend=dict(
@@ -467,38 +898,38 @@ if page == "1. Live Predictor":
                 y=0.01,
                 xanchor='right',
                 yanchor='bottom',
-                font=dict(family='IBM Plex Mono', size=10, color='#8a8fa8'),
+                font=dict(family='IBM Plex Mono', size=10, color=chart_colors['secondary_text']),
                 bgcolor='rgba(0,0,0,0)' # Transparent background
             ),
             
             hoverlabel=dict(
-                bgcolor="#141720", 
+                bgcolor=chart_colors['plot_bgcolor'], 
                 font_size=12, 
                 font_family="IBM Plex Mono", 
-                font_color="#ffffff",
+                font_color=chart_colors['text_color'],
                 bordercolor="#00e5a0"
             ),
             scene=dict(
                 xaxis=dict(
-                    title=dict(text='Recency', font=dict(family='IBM Plex Mono', size=12, color="#00e5a0")), 
-                    backgroundcolor='#0d0f18',  
-                    gridcolor="#2a2f45",         
+                    title=dict(text='Recency', font=dict(family='IBM Plex Mono', size=14, color=chart_colors['secondary_text'])), 
+                    backgroundcolor=chart_colors['plot_bgcolor'],  
+                    gridcolor=chart_colors['grid_color'],         
                     showbackground=True,
-                    tickfont=dict(family='IBM Plex Mono', size=11, color='#ffffff') 
+                    tickfont=dict(family='IBM Plex Mono', size=13, color=chart_colors['text_color']) 
                 ),
                 yaxis=dict(
-                    title=dict(text='Frequency', font=dict(family='IBM Plex Mono', size=12, color='#00e5a0')), 
-                    backgroundcolor='#0d0f18',
-                    gridcolor="#2a2f45",
+                    title=dict(text='Frequency', font=dict(family='IBM Plex Mono', size=14, color=chart_colors['secondary_text'])), 
+                    backgroundcolor=chart_colors['plot_bgcolor'],
+                    gridcolor=chart_colors['grid_color'],
                     showbackground=True,
-                    tickfont=dict(family='IBM Plex Mono', size=11, color='#ffffff')
+                    tickfont=dict(family='IBM Plex Mono', size=13, color=chart_colors['text_color'])
                 ),
                 zaxis=dict(
-                    title=dict(text='Monetary', font=dict(family='IBM Plex Mono', size=12, color='#00e5a0')), 
-                    backgroundcolor='#0d0f18',
-                    gridcolor="#2a2f45",
+                    title=dict(text='Monetary', font=dict(family='IBM Plex Mono', size=14, color=chart_colors['secondary_text'])), 
+                    backgroundcolor=chart_colors['plot_bgcolor'],
+                    gridcolor=chart_colors['grid_color'],
                     showbackground=True,
-                    tickfont=dict(family='IBM Plex Mono', size=11, color='#ffffff')
+                    tickfont=dict(family='IBM Plex Mono', size=13, color=chart_colors['text_color'])
                 ),
                 camera=dict(
                     eye=dict(x=1.5, y=1.5, z=0.5)
@@ -593,7 +1024,7 @@ elif page == "2. AI Chat Analyst":
             with st.chat_message(role, avatar="👤"):
                 st.markdown(msg["content"])
         else:
-            with st.chat_message(role):
+            with st.chat_message(role, avatar="🧠"):
                 st.markdown(msg["content"])
 
     user_input = st.chat_input("Ask about your customers...") or triggered
@@ -625,7 +1056,7 @@ elif page == "2. AI Chat Analyst":
             st.session_state.chat_history.append({"role": "user", "content": user_input})
 
             # Call Groq
-            with st.chat_message("assistant"):
+            with st.chat_message("assistant", avatar="🧠"):
                 ph = st.empty()
                 full_text = ""
                 
@@ -679,6 +1110,9 @@ elif page == "3. Risk Overview":
     ])
 
     c1, c2 = st.columns(2)
+    
+    # Get dynamic colors for charts
+    chart_colors = get_chart_colors()
 
     with c1:
         st.markdown('<div class="section-label">Risk Distribution</div>', unsafe_allow_html=True)
@@ -687,15 +1121,15 @@ elif page == "3. Risk Overview":
             labels=rc.index, values=rc.values,
             marker_colors=['#ff3d57', '#f5a623', '#00e5a0'],
             hole=0.55,
-            textfont=dict(family='IBM Plex Mono', size=10),
+            textfont=dict(family='IBM Plex Mono', size=10, color=chart_colors['text_color']),
             hovertemplate='%{label}<br>%{value:,} customers<br>%{percent}<extra></extra>'
         ))
         fig_d.update_layout(
-            paper_bgcolor='#0d0f18',
+            paper_bgcolor=chart_colors['paper_bgcolor'],
             showlegend=True,
-            legend=dict(font=dict(family='IBM Plex Mono', size=9, color='#8a8fa8')),
+            legend=dict(font=dict(family='IBM Plex Mono', size=9, color=chart_colors['secondary_text'])),
             margin=dict(l=20, r=20, t=20, b=20),
-            height=300
+            height=280  # Reduced for better mobile display
         )
         st.plotly_chart(fig_d, use_container_width=True, theme=None)
 
@@ -704,22 +1138,22 @@ elif page == "3. Risk Overview":
         fig_h = go.Figure(go.Histogram(
             x=customer_db['churn_probability'], nbinsx=40,
             marker=dict(color='#00e5a0', opacity=0.7,
-                        line=dict(color='#0d0f18', width=0.5))
+                        line=dict(color=chart_colors['plot_bgcolor'], width=0.5))
         ))
         fig_h.update_layout(
-            paper_bgcolor='#0d0f18', plot_bgcolor='#0d0f18',
+            paper_bgcolor=chart_colors['paper_bgcolor'], plot_bgcolor=chart_colors['plot_bgcolor'],
             xaxis=dict(
-                title=dict(text='Churn Probability', font=dict(family='IBM Plex Mono', size=9, color='#4a4f63')),
-                gridcolor='#1c1f2e',
-                tickfont=dict(family='IBM Plex Mono', size=8, color='#4a4f63')
+                title=dict(text='Churn Probability', font=dict(family='IBM Plex Mono', size=9, color=chart_colors['secondary_text'])),
+                gridcolor=chart_colors['grid_color'],
+                tickfont=dict(family='IBM Plex Mono', size=8, color=chart_colors['secondary_text'])
             ),
             yaxis=dict(
-                title=dict(text='Customers', font=dict(family='IBM Plex Mono', size=9, color='#4a4f63')),
-                gridcolor='#1c1f2e',
-                tickfont=dict(family='IBM Plex Mono', size=8, color='#4a4f63')
+                title=dict(text='Customers', font=dict(family='IBM Plex Mono', size=9, color=chart_colors['secondary_text'])),
+                gridcolor=chart_colors['grid_color'],
+                tickfont=dict(family='IBM Plex Mono', size=8, color=chart_colors['secondary_text'])
             ),
             margin=dict(l=20, r=20, t=20, b=20),
-            height=300
+            height=280  # Reduced for better mobile display
         )
         st.plotly_chart(fig_h, use_container_width=True, theme=None)
 
@@ -733,23 +1167,23 @@ elif page == "3. Risk Overview":
             color=customer_db['churn_probability'],
             colorscale='RdYlGn_r', size=4, opacity=0.55,
             colorbar=dict(
-                title=dict(text='Risk', font=dict(family='IBM Plex Mono', size=9, color='#4a4f63')),
-                tickfont=dict(family='IBM Plex Mono', size=8, color='#4a4f63')
+                title=dict(text='Risk', font=dict(family='IBM Plex Mono', size=9, color=chart_colors['secondary_text'])),
+                tickfont=dict(family='IBM Plex Mono', size=8, color=chart_colors['secondary_text'])
             )
         ),
         hovertemplate='Recency: %{x}d<br>LTV: $%{y:.0f}<extra></extra>'
     ))
     fig_s.update_layout(
-        paper_bgcolor='#0d0f18', plot_bgcolor='#0f1119',
+        paper_bgcolor=chart_colors['paper_bgcolor'], plot_bgcolor=chart_colors['plot_bgcolor'],
         xaxis=dict(
-            title=dict(text='Days Since Last Purchase', font=dict(family='IBM Plex Mono', size=9, color='#4a4f63')),
-            gridcolor='#1c1f2e',
-            tickfont=dict(family='IBM Plex Mono', size=8, color='#4a4f63')
+            title=dict(text='Days Since Last Purchase', font=dict(family='IBM Plex Mono', size=9, color=chart_colors['secondary_text'])),
+            gridcolor=chart_colors['grid_color'],
+            tickfont=dict(family='IBM Plex Mono', size=8, color=chart_colors['secondary_text'])
         ),
         yaxis=dict(
-            title=dict(text='Total Spend ($)', font=dict(family='IBM Plex Mono', size=9, color='#4a4f63')),
-            gridcolor='#1c1f2e',
-            tickfont=dict(family='IBM Plex Mono', size=8, color='#4a4f63')
+            title=dict(text='Total Spend ($)', font=dict(family='IBM Plex Mono', size=9, color=chart_colors['secondary_text'])),
+            gridcolor=chart_colors['grid_color'],
+            tickfont=dict(family='IBM Plex Mono', size=8, color=chart_colors['secondary_text'])
         ),
         margin=dict(l=20, r=60, t=10, b=40),
         height=360
@@ -931,6 +1365,10 @@ Executive tone. Data-driven. No bullet points."""
 
     with col_chart:
         st.markdown('<div class="section-label">Revenue by Segment</div>', unsafe_allow_html=True)
+        
+        # Get dynamic colors for charts
+        chart_colors = get_chart_colors()
+        
         seg = customer_db.groupby('risk_level', observed=False)['Monetary'].sum().reset_index()
         
         # FIX: Map colors explicitly so HIGH is always Red
@@ -943,14 +1381,14 @@ Executive tone. Data-driven. No bullet points."""
             marker=dict(color=colors, line=dict(width=0)), # Apply fixed colors
             text=seg['Monetary'].apply(lambda x: f"${x:,.0f}"),
             textposition='outside',
-            textfont=dict(family='IBM Plex Mono', size=9, color="#f8f9fc")
+            textfont=dict(family='IBM Plex Mono', size=9, color=chart_colors['text_color'])
         ))
         fig_b.update_layout(
-            paper_bgcolor='#0d0f18', plot_bgcolor='#0f1119',
-            xaxis=dict(gridcolor='#1c1f2e',
-                       tickfont=dict(family='IBM Plex Mono', size=9, color='#4a4f63')),
-            yaxis=dict(gridcolor='#1c1f2e',
-                       tickfont=dict(family='IBM Plex Mono', size=9, color='#4a4f63')),
+            paper_bgcolor=chart_colors['paper_bgcolor'], plot_bgcolor=chart_colors['plot_bgcolor'],
+            xaxis=dict(gridcolor=chart_colors['grid_color'],
+                       tickfont=dict(family='IBM Plex Mono', size=9, color=chart_colors['secondary_text'])),
+            yaxis=dict(gridcolor=chart_colors['grid_color'],
+                       tickfont=dict(family='IBM Plex Mono', size=9, color=chart_colors['secondary_text'])),
             margin=dict(l=10, r=10, t=30, b=10),
             height=280
         )
