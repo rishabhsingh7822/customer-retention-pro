@@ -5,6 +5,7 @@ import plotly.graph_objs as go
 import numpy as np
 import os
 import json
+import time
 from groq import Groq 
 from dotenv import load_dotenv
 import streamlit_authenticator as stauth 
@@ -19,6 +20,17 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+st.markdown("""
+<style>
+.block-container { padding-top: 0.5rem !important; }
+.main { padding-top: 0 !important; }
+[data-testid="stAppViewContainer"] { padding-top: 0 !important; }
+header[data-testid="stHeader"] { height: 0 !important; }
+[data-testid="stSidebar"] > div:first-child { padding-top: 0.5rem !important; }
+[data-testid="stToolbar"] { display: none !important; }
+</style>
+""", unsafe_allow_html=True)
 
 # ============================================
 # 1B. THEME STATE
@@ -638,8 +650,7 @@ p code, li code, .ai-stream-box code, [data-testid="stChatMessage"] code {{
 
 # 2B. SECURE AUTHENTICATION
 # ============================================
-import streamlit_authenticator as stauth
-import time
+# Note: imports moved to top of file (lines 1-11)
 
 # 1. Initialize the tracker and timer in memory
 if 'login_attempts' not in st.session_state:
@@ -664,122 +675,145 @@ credentials = {
 
 authenticator = stauth.Authenticate(
     credentials,
-    "retainion_dashboard",
+    "retainion_secure_v2",  
     "auth_cookie_key",
-    0 
+    1
 )
+
 
 # ============================================
 # THE VISUAL LOGIC SWITCH
 # ============================================
 if st.session_state.get("authentication_status"):
+    
+    # --- 10-MINUTE INACTIVITY TRACKER ---
+    current_time = time.time()
+    
+    if 'last_activity' in st.session_state:
+        # 600 seconds = 10 minutes. If they are idle longer than this, boot them out.
+        if current_time - st.session_state.last_activity > 600:
+            st.session_state["authentication_status"] = None
+            st.session_state["username"] = None
+            st.session_state["name"] = None
+            st.session_state["logout"] = True
+            
+            st.warning("🔒 Session expired due to 10 minutes of inactivity. Please log in again.")
+            time.sleep(2)
+            st.rerun()
+            
+    # If they clicked anything, update their activity timer to right now
+    st.session_state.last_activity = current_time
+
     # IF LOGGED IN: Reset attempts and skip drawing the login UI entirely!
     st.session_state.login_attempts = 0
     
 else:
-    # IF NOT LOGGED IN: Draw the branded login screen
-    st.markdown("<br>", unsafe_allow_html=True)
-    _, text_col, _ = st.columns([1, 2, 1])
-
-    with text_col:
+    # 1. RESERVE SPACE AT THE TOP (This guarantees no flicker!)
+    header_placeholder = st.empty()
+    lockout_placeholder = st.empty()
+    
+    # 2. CHECK COOKIE / DRAW LOGIN WIDGET
+    # We execute this before drawing headers. If the cookie is valid, 
+    # the widget stays invisible and we instantly bypass the UI!
+    _, form_col, _ = st.columns([1, 1.5, 1])
+    with form_col:
         st.markdown("""
-        <div style="text-align: center; margin-bottom: 1.5rem;">
-            <div style="font-family: var(--font-display); font-size: 3.5rem; font-weight: 800; letter-spacing: 0.12em; color: var(--accent-green); line-height: 1.2; white-space: nowrap;">USERS</div>
-            <div style="font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; letter-spacing: 0.10em; color: var(--text-primary); line-height: 1.2; white-space: nowrap;">VERIFICATION LOGIN</div>
-        </div>
+        <style>
+        [data-testid="stFormSubmitButton"] { display: flex; justify-content: center; margin-top: 0.5rem; }
+        [data-testid="stFormSubmitButton"] button { width: 100% !important; max-width: 250px !important; }
+        </style>
         """, unsafe_allow_html=True)
+        
+        # Only draw the login boxes if they aren't locked out
+        if st.session_state.login_attempts < 3:
+            authenticator.login("main")
+            
+    # 3. EVALUATE AUTHENTICATION STATUS
+    auth_status = st.session_state.get("authentication_status")
 
-        # Handle the Lockout Timer UI
+    if auth_status == True:
+        # ✅ COOKIE IS VALID: Instantly reload into the dashboard (ZERO FLICKER)
+        st.rerun()
+
+    else:
+        # ❌ NO COOKIE: Safely draw the branding headers in the reserved space
+        with header_placeholder.container():
+            st.markdown("<br>", unsafe_allow_html=True)
+            _, text_col, _ = st.columns([1, 2, 1])
+            with text_col:
+                st.markdown("""
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <div style="font-family: var(--font-display); font-size: 3.5rem; font-weight: 800; letter-spacing: 0.12em; color: var(--accent-green); line-height: 1.2; white-space: nowrap;">USERS</div>
+                    <div style="font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; letter-spacing: 0.10em; color: var(--text-primary); line-height: 1.2; white-space: nowrap;">VERIFICATION LOGIN</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # --- Handle Failed Logins ---
+        if auth_status == False:
+            st.session_state.login_attempts += 1
+            if st.session_state.login_attempts >= 3:
+                st.session_state.lockout_time = time.time()
+                st.rerun()
+            else:
+                with form_col:
+                    attempts_left = 3 - st.session_state.login_attempts
+                    st.error(f"Incorrect password. {attempts_left} attempts remaining.")
+                st.stop()
+
+        # --- Handle System Lockout ---
         if st.session_state.login_attempts >= 3:
             elapsed_time = time.time() - st.session_state.lockout_time
             remaining_time = int(120 - elapsed_time)
             
             if remaining_time > 0:
-                import streamlit.components.v1 as components
-                
-                _, lock_col, _ = st.columns([1, 1.5, 1])
-                with lock_col:
-                    st.error("🔒 SYSTEM LOCKED: Too many failed attempts.")
-                    
-                    # 1. Automatic Live Countdown (Powered by JavaScript to prevent typing interruptions)
-                    timer_html = f"""
-                    <style>
-                        body {{ margin: 0; font-family: sans-serif; background-color: transparent; }}
-                        .warning-box {{
-                            border-left: 4px solid #f5a623;
-                            background-color: rgba(245, 166, 35, 0.1);
-                            color: #8a8fa8; 
-                            padding: 0.8rem 1rem;
-                            border-radius: 4px;
-                            font-size: 0.9rem;
-                        }}
-                        .highlight {{ color: #f5a623; font-family: monospace; font-size: 1.05rem; font-weight: bold; }}
-                    </style>
-                    <div class="warning-box">
-                        Please wait <span class="highlight" id="time">{remaining_time}</span><span class="highlight"> seconds</span> before trying again.
-                    </div>
-                    <script>
-                        let timeLeft = {remaining_time};
-                        const timerEl = document.getElementById('time');
-                        const countdown = setInterval(() => {{
-                            timeLeft--;
-                            if(timerEl) timerEl.innerText = timeLeft;
-                            if(timeLeft <= 0) {{
-                                clearInterval(countdown);
-                                window.parent.location.reload(); // Instantly reloads the page to unlock
-                            }}
-                        }}, 1000);
-                    </script>
-                    """
-                    components.html(timer_html, height=70)
-                    
-                    # 2. Developer Key Input 
-                    dev_input = st.text_input("Developer Key", type="password")
-                    
-                    # 3. Removed the "Refresh Timer" column entirely!
-                    if st.button("Unlock System", use_container_width=True):
-                        if dev_input == DEV_PASSWORD:
-                            st.session_state.login_attempts = 0
-                            st.session_state.lockout_time = 0
-                            st.session_state['authentication_status'] = None
-                            st.success("System unlocked! Refreshing...")
-                            time.sleep(1)
-                            st.rerun()
-                        else:
-                            st.error("Access Denied: Invalid Developer Key.")
+                with lockout_placeholder.container():
+                    import streamlit.components.v1 as components
+                    _, lock_col, _ = st.columns([1, 1.5, 1])
+                    with lock_col:
+                        st.error("🔒 SYSTEM LOCKED: Too many failed attempts.")
+                        
+                        timer_html = f"""
+                        <style>
+                            body {{ margin: 0; font-family: sans-serif; background-color: transparent; }}
+                            .warning-box {{ border-left: 4px solid #f5a623; background-color: rgba(245, 166, 35, 0.1); color: #8a8fa8; padding: 0.8rem 1rem; border-radius: 4px; font-size: 0.9rem; }}
+                            .highlight {{ color: #f5a623; font-family: monospace; font-size: 1.05rem; font-weight: bold; }}
+                        </style>
+                        <div class="warning-box">
+                            Please wait <span class="highlight" id="time">{remaining_time}</span><span class="highlight"> seconds</span> before trying again.
+                        </div>
+                        <script>
+                            let timeLeft = {remaining_time};
+                            const timerEl = document.getElementById('time');
+                            const countdown = setInterval(() => {{
+                                timeLeft--;
+                                if(timerEl) timerEl.innerText = timeLeft;
+                                if(timeLeft <= 0) {{ clearInterval(countdown); window.parent.location.reload(); }}
+                            }}, 1000);
+                        </script>
+                        """
+                        components.html(timer_html, height=70)
+                        
+                        dev_input = st.text_input("Developer Key", type="password")
+                        if st.button("Unlock System", use_container_width=True):
+                            if dev_input == DEV_PASSWORD:
+                                st.session_state.login_attempts = 0
+                                st.session_state.lockout_time = 0
+                                st.session_state['authentication_status'] = None
+                                st.success("System unlocked! Refreshing...")
+                                time.sleep(1)
+                                st.rerun()
+                            else:
+                                st.error("Access Denied: Invalid Developer Key.")
                 st.stop()
             else:
                 st.session_state.login_attempts = 0
                 st.session_state.lockout_time = 0
                 st.session_state['authentication_status'] = None
+                st.rerun()
 
-        # Draw the Username/Password Input Boxes
-        _, form_col, _ = st.columns([1, 1.5, 1])
-        with form_col:
-            st.markdown("""
-            <style>
-            [data-testid="stFormSubmitButton"] { display: flex; justify-content: center; margin-top: 0.5rem; }
-            [data-testid="stFormSubmitButton"] button { width: 100% !important; max-width: 250px !important; }
-            </style>
-            """, unsafe_allow_html=True)
-
-            authenticator.login("main")
-            
-            # Fetch the status immediately after login attempt
-            auth_status = st.session_state.get("authentication_status")
-
-            if auth_status == False:
-                st.session_state.login_attempts += 1
-                if st.session_state.login_attempts >= 3:
-                    st.session_state.lockout_time = time.time()
-                    st.rerun()
-                else:
-                    attempts_left = 3 - st.session_state.login_attempts
-                    st.error(f"Incorrect password. {attempts_left} attempts remaining.")
-                    st.stop()
-                    
-            elif auth_status == None:
-                st.stop() 
+        # --- Stop Execution if Waiting for Input ---
+        if auth_status == None:
+            st.stop() 
 
 
 # 3. LOAD ARTIFACTS
@@ -1127,9 +1161,9 @@ if page == "1. Live Predictor":
         
         fig = go.Figure()
         
-        # Trace 0 -> Renamed to "Current Customer"
+        # Trace 0 -> "Current Customer"
         fig.add_trace(go.Scatter3d(
-            name='Current Customer',  # <--- ADDED PROPER NAME
+            name='Current Customer', 
             x=[recency], y=[frequency], z=[monetary],
             mode='markers',
             hovertemplate=(
@@ -1145,7 +1179,7 @@ if page == "1. Live Predictor":
         
         # Trace 1 ->"Benchmarks"
         fig.add_trace(go.Scatter3d(
-            name='Benchmarks',  # <--- ADDED PROPER NAME
+            name='Benchmarks', 
             x=[15, 310], y=[45, 1], z=[9000, 40],
             mode='text',
             text=['◆ Champions', '◆ Churned'],
@@ -1240,7 +1274,8 @@ Write a sharp, specific retention strategy:
 Be direct. Reference their actual numbers. No generic advice."""
 
                 placeholder = st.empty()
-                stream_to_placeholder(prompt, placeholder)
+                with st.spinner("🧠 AI is analyzing customer behavior..."):
+                    stream_to_placeholder(prompt, placeholder)
             else:
                 st.markdown(
                     '<div class="ai-stream-box" style="color:var(--text-muted);font-size:0.78rem">'
@@ -1543,7 +1578,8 @@ Sharp and direct. No fluff."""
 
             with st.expander("◈ AI Retention Strategy", expanded=True):
                 ph = st.empty()
-                stream_to_placeholder(prompt, ph)
+                with st.spinner("🧠 Generating targeted retention strategy..."):
+                    stream_to_placeholder(prompt, ph)
 
 
 # ============================================
@@ -1597,7 +1633,8 @@ Sentence 5: 30-day target metric
 Executive tone. Data-driven. No bullet points."""
 
             ph = st.empty()
-            stream_to_placeholder(prompt, ph)
+            with st.spinner("🧠 Drafting board-level executive brief..."):
+                stream_to_placeholder(prompt, ph)
         else:
             st.markdown(
                 '<div class="ai-stream-box" style="color:var(--text-muted);font-size:0.78rem">'
@@ -1726,8 +1763,9 @@ elif page == "6. Batch Scorer":
             with c3:
                 st.metric("Average Churn Risk", f"{avg_risk_batch:.1%}")
             
-            # Display the freshly scored data
-            st.dataframe(batch_df.head(len(batch_df)), use_container_width=True)
+            # Safe preview of the freshly scored data
+            st.caption(f"Showing top 100 highest-risk customers out of {len(batch_df):,}")
+            st.dataframe(batch_df.head(100), use_container_width=True)
             
             # --- DOWNLOAD BUTTON ---
             st.markdown('<div class="section-label">Export Intelligence</div>', unsafe_allow_html=True)
