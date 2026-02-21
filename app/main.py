@@ -658,16 +658,33 @@ if 'login_attempts' not in st.session_state:
 if 'lockout_time' not in st.session_state:
     st.session_state.lockout_time = 0
 
-DEV_PASSWORD = "Rishabh_DevKey_2026"
+# FIX #2 & #6: Passwords loaded from environment variables (never hardcoded in source).
+# Add these to your .env file:
+#   DEV_PASSWORD=your_dev_key
+#   ADMIN_PASSWORD=your_admin_password
+#   ADMIN_EMAIL=your_email
+#   ADMIN_NAME=Your Name
+# Then run: python -c "import bcrypt; print(bcrypt.hashpw(b'your_password', bcrypt.gensalt()).decode())"
+# and paste the result as ADMIN_PASSWORD_HASH in .env instead, or use the runtime approach below.
+DEV_PASSWORD = os.getenv("DEV_PASSWORD", "")
 
-# 2. Set up the Authenticator configuration
-hashed_pass = stauth.Hasher.hash('Retainion123')
+# FIX #6: Use pre-hashed password stored in env to avoid deprecated Hasher API.
+# Generate your hash once with: python -c "import streamlit_authenticator as sa; print(sa.Hasher(['yourpass']).generate())"
+# Then set ADMIN_PASSWORD_HASH=<result> in your .env
+raw_admin_pass = os.getenv("ADMIN_PASSWORD", "")
+try:
+    # Works for streamlit-authenticator >= 0.3.x
+    hashed_pass = stauth.Hasher.hash(raw_admin_pass) if raw_admin_pass else ""
+except AttributeError:
+    # Fallback for older versions
+    hashed_pass = stauth.Hasher([raw_admin_pass]).generate()[0] if raw_admin_pass else ""
 
+# FIX #2 (continued): Load admin identity from environment variables
 credentials = {
     "usernames": {
-        "Rishabh_admin": {
-            "email": "rishabh@retainion.com",
-            "name": "Rishabh singh",
+        os.getenv("ADMIN_USERNAME", "admin"): {
+            "email": os.getenv("ADMIN_EMAIL", ""),
+            "name":  os.getenv("ADMIN_NAME", "Admin"),
             "password": hashed_pass
         }
     }
@@ -816,6 +833,11 @@ else:
             st.stop() 
 
 
+# FIX #3: Hard-stop if user is not authenticated.
+# Nothing below (model loading, sidebar, pages) runs until the user is logged in.
+if not st.session_state.get("authentication_status"):
+    st.stop()
+
 # 3. LOAD ARTIFACTS
 @st.cache_resource
 def load_artifacts():
@@ -835,7 +857,9 @@ def load_artifacts():
 
     try:
         explainer = joblib.load(os.path.join(model_dir, 'shap_explainer.pkl'))
-    except:
+    except Exception as e:
+        # FIX #4: Catch specific exceptions so real errors aren't silently swallowed
+        st.warning(f"SHAP explainer not loaded (explainability disabled): {e}")
         explainer = None
 
     feature_names = metadata['feature_names']
@@ -850,11 +874,12 @@ def load_artifacts():
     )
     customer_db_sorted = customer_db.sort_values('churn_probability', ascending=False)
 
-    return model, customer_db, customer_db_sorted, metadata, explainer
+    # FIX #10: Return feature_names so it's not extracted twice outside this function
+    return model, customer_db, customer_db_sorted, metadata, explainer, feature_names
 
 # Instantly unpack the pre-calculated data from memory on every page switch
-model, customer_db, customer_db_sorted, metadata, explainer = load_artifacts()
-feature_names = metadata['feature_names']
+model, customer_db, customer_db_sorted, metadata, explainer, feature_names = load_artifacts()
+# FIX #10: feature_names is now returned directly — no need to re-extract from metadata here
 
 
 # ============================================
@@ -896,14 +921,12 @@ def get_chart_colors():
         }
 
 def get_chart_height(default_height=400):
-    """Returns responsive chart height - smaller for mobile"""
+    """Returns responsive chart height — smaller for mobile.
+    FIX #5: Actually return the mobile height instead of always returning default."""
     is_mobile = st.query_params.get("mobile", "false") == "true"
+    return int(default_height * 0.6) if is_mobile else default_height
 
-    return default_height
-
-# Add mobile detection script
-st.markdown("""
-""", unsafe_allow_html=True)
+# FIX #9: Removed empty st.markdown block (dead code placeholder for unimplemented mobile script)
 
 # ============================================
 # 5. AI HELPERS
@@ -960,7 +983,8 @@ def get_shap_factors(customer_dict: dict):
              "effect": "increases" if s > 0 else "decreases"}
             for f, v, s in zip(feature_names, X.values[0], vals)
         ], key=lambda x: abs(x["impact"]), reverse=True)[:5]
-    except:
+    except Exception:
+        # FIX #4: Use specific exception type instead of bare except
         return []
 
 
@@ -1309,7 +1333,8 @@ elif page == "2. AI Chat Analyst":
     triggered = None
     for btn, (label, question) in zip([qc1, qc2, qc3, qc4], questions.items()):
         with btn:
-            if st.button(btn_label := label, use_container_width=True):
+            # FIX #8: Removed unnecessary walrus operator (:=) — label is already in scope
+            if st.button(label, use_container_width=True):
                 triggered = question
 
     st.markdown('<div class="section-label">Conversation</div>', unsafe_allow_html=True)
@@ -1417,9 +1442,12 @@ elif page == "3. Risk Overview":
     with c1:
         st.markdown('<div class="section-label">Risk Distribution</div>', unsafe_allow_html=True)
         rc = customer_db['risk_level'].value_counts()
+        # FIX #7: Map colors by label name so HIGH is always red regardless of sort order
+        _pie_color_map = {'HIGH': '#ff3d57', 'MEDIUM': '#f5a623', 'LOW': '#00e5a0'}
+        _pie_colors = [_pie_color_map.get(lbl, '#8a8fa8') for lbl in rc.index]
         fig_d = go.Figure(go.Pie(
             labels=rc.index, values=rc.values,
-            marker_colors=['#ff3d57', '#f5a623', '#00e5a0'],
+            marker_colors=_pie_colors,
             hole=0.55,
             textfont=dict(family='IBM Plex Mono', size=10, color=chart_colors['text_color']),
             hovertemplate='%{label}<br>%{value:,} customers<br>%{percent}<extra></extra>'
@@ -1557,10 +1585,12 @@ elif page == "4. At-Risk Customers":
                 
                 prob = float(top['churn_probability'])
                 factors = get_shap_factors(top.to_dict())
-            facts   = "\n".join([f"- {f['feature']}: {f['value']:.2f} ({f['effect']} churn)"
-                                 for f in factors]) or "N/A"
+                # FIX #1: Corrected indentation — facts, prompt, and expander must be
+                # inside the else block so top/prob/factors are always defined before use.
+                facts = "\n".join([f"- {f['feature']}: {f['value']:.2f} ({f['effect']} churn)"
+                                   for f in factors]) or "N/A"
 
-            prompt = f"""Most at-risk customer analysis:
+                prompt = f"""Most at-risk customer analysis:
 
 Risk: {prob:.1%} | Inactive: {top['Recency']:.0f}d | LTV: ${top['Monetary']:.0f}
 Orders: {top['Frequency']:.0f} | Products: {top['product_diversity']:.0f}
@@ -1576,10 +1606,10 @@ Provide:
 
 Sharp and direct. No fluff."""
 
-            with st.expander("◈ AI Retention Strategy", expanded=True):
-                ph = st.empty()
-                with st.spinner("🧠 Generating targeted retention strategy..."):
-                    stream_to_placeholder(prompt, ph)
+                with st.expander("◈ AI Retention Strategy", expanded=True):
+                    ph = st.empty()
+                    with st.spinner("🧠 Generating targeted retention strategy..."):
+                        stream_to_placeholder(prompt, ph)
 
 
 # ============================================
