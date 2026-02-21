@@ -626,6 +626,8 @@ import time
 # 1. Initialize the tracker and timer in memory
 if 'login_attempts' not in st.session_state:
     st.session_state.login_attempts = 0
+if 'total_failed_attempts' not in st.session_state:    
+    st.session_state.total_failed_attempts = 0
 if 'lockout_time' not in st.session_state:
     st.session_state.lockout_time = 0
 
@@ -648,24 +650,48 @@ authenticator = stauth.Authenticate(
     credentials,
     "retainion_dashboard",
     "auth_cookie_key",
-    0 
+    30  
 )
 
 # ============================================
 # THE VISUAL LOGIC SWITCH
 # ============================================
+
+# 1. Force a quick rerun on a hard refresh to catch the cookie
+if "cookie_loaded" not in st.session_state:
+    st.session_state.cookie_loaded = True
+    time.sleep(0.2)
+    st.rerun()
+
 if st.session_state.get("authentication_status"):
-    # IF LOGGED IN: Reset attempts and skip drawing the login UI entirely!
+    
+    # 2. 5-Minute Inactivity Timer
+    if 'last_activity' not in st.session_state:
+        st.session_state.last_activity = time.time()
+        
+    if time.time() - st.session_state.last_activity > 300:
+        st.session_state["authentication_status"] = None
+        st.session_state.last_activity = time.time()
+        try:
+            # Physically destroy the cookie so it doesn't auto-login
+            authenticator.cookie_manager.delete(authenticator.cookie_name)
+        except:
+            pass
+        st.warning("⏳ Session expired due to inactivity. Refreshing the system...")
+        import streamlit.components.v1 as components
+        components.html("<script>setTimeout(function(){ window.parent.location.reload(); }, 2000);</script>", height=0)
+        st.stop() # Stops the rest of the dashboard from bleeding through
+        
+    # Update timer on every interaction
+    st.session_state.last_activity = time.time()
     st.session_state.login_attempts = 0
     
 else:
-    # IF NOT LOGGED IN: Draw the branded login screen
-    st.markdown("<br><br>", unsafe_allow_html=True)
     _, text_col, _ = st.columns([1, 2, 1])
 
     with text_col:
         st.markdown("""
-        <div style="text-align:center;margin-bottom:2rem;">
+        <div style="text-align:center; margin-top:-4rem; margin-bottom:2rem;">
             <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;
                         letter-spacing:0.28em;color:#00e5a0;text-transform:uppercase;
                         margin-bottom:0.9rem;">
@@ -686,7 +712,32 @@ else:
         """, unsafe_allow_html=True)
 
         # Handle the Lockout Timer UI
-        if st.session_state.login_attempts >= 3:
+        if st.session_state.get("total_failed_attempts", 0) >= 10:
+            
+            # --- 🚨 PERMANENT HARD LOCK (NO TIMER) ---
+            _, lock_col, _ = st.columns([1, 1.5, 1])
+            with lock_col:
+                st.error("🚨 CRITICAL SECURITY LOCK: Maximum total attempts exceeded.")
+                st.warning("System permanently locked. Developer Key required to restore access.")
+                
+                dev_input = st.text_input("Developer Key", type="password", key="dev_hard_lock")
+                
+                if st.button("Unlock System", use_container_width=True, key="btn_hard_lock"):
+                    if dev_input == DEV_PASSWORD:
+                        st.session_state.login_attempts = 0
+                        st.session_state.total_failed_attempts = 0  # 👈 Clears the permanent lock
+                        st.session_state.lockout_time = 0
+                        st.session_state['authentication_status'] = None
+                        st.success("System unlocked! Refreshing...")
+                        time.sleep(1)
+                        st.rerun()
+                    else:
+                        st.error("Access Denied: Invalid Developer Key.")
+            st.stop()
+
+        elif st.session_state.login_attempts >= 3:
+            
+            # --- ⏳ NORMAL 2-MINUTE TIMER ---
             elapsed_time = time.time() - st.session_state.lockout_time
             remaining_time = int(120 - elapsed_time)
             
@@ -697,18 +748,11 @@ else:
                 with lock_col:
                     st.error("🔒 SYSTEM LOCKED: Too many failed attempts.")
                     
-                    # 1. Automatic Live Countdown (Powered by JavaScript to prevent typing interruptions)
+                    # 1. Automatic Live Countdown
                     timer_html = f"""
                     <style>
                         body {{ margin: 0; font-family: sans-serif; background-color: transparent; }}
-                        .warning-box {{
-                            border-left: 4px solid #f5a623;
-                            background-color: rgba(245, 166, 35, 0.1);
-                            color: #8a8fa8; 
-                            padding: 0.8rem 1rem;
-                            border-radius: 4px;
-                            font-size: 0.9rem;
-                        }}
+                        .warning-box {{ border-left: 4px solid #f5a623; background-color: rgba(245, 166, 35, 0.1); color: #8a8fa8; padding: 0.8rem 1rem; border-radius: 4px; font-size: 0.9rem; }}
                         .highlight {{ color: #f5a623; font-family: monospace; font-size: 1.05rem; font-weight: bold; }}
                     </style>
                     <div class="warning-box">
@@ -722,7 +766,7 @@ else:
                             if(timerEl) timerEl.innerText = timeLeft;
                             if(timeLeft <= 0) {{
                                 clearInterval(countdown);
-                                window.parent.location.reload(); // Instantly reloads the page to unlock
+                                window.parent.location.reload(); 
                             }}
                         }}, 1000);
                     </script>
@@ -730,12 +774,12 @@ else:
                     components.html(timer_html, height=70)
                     
                     # 2. Developer Key Input 
-                    dev_input = st.text_input("Developer Key", type="password")
+                    dev_input = st.text_input("Developer Key", type="password", key="dev_temp_lock")
                     
-                    # 3. Removed the "Refresh Timer" column entirely!
-                    if st.button("Unlock System", use_container_width=True):
+                    if st.button("Unlock System", use_container_width=True, key="btn_temp_lock"):
                         if dev_input == DEV_PASSWORD:
                             st.session_state.login_attempts = 0
+                            st.session_state.total_failed_attempts = 0 # 👈 Reset the permanent counter early if unlocked
                             st.session_state.lockout_time = 0
                             st.session_state['authentication_status'] = None
                             st.success("System unlocked! Refreshing...")
@@ -745,6 +789,7 @@ else:
                             st.error("Access Denied: Invalid Developer Key.")
                 st.stop()
             else:
+                # Timer expired normally, let them try again but DO NOT reset total_failed_attempts
                 st.session_state.login_attempts = 0
                 st.session_state.lockout_time = 0
                 st.session_state['authentication_status'] = None
@@ -759,7 +804,7 @@ else:
                 background: #0f1119;
                 border: 1px solid #1c1f2e;
                 border-top: 3px solid #00e5a0;
-                padding: 2rem 2rem 1.5rem;
+                padding: 0.5rem 2rem 1.5rem;
                 border-radius: 2px;
             }
 
@@ -782,7 +827,7 @@ else:
                 color: #e2ddd6 !important;
                 font-family: 'IBM Plex Mono', monospace !important;
                 font-size: 0.88rem !important;
-                padding: 0.65rem 0.9rem !important;
+                padding: 0.35rem 0.9rem !important;
             }
             [data-testid="stForm"] [data-testid="stTextInput"] input:focus {
                 border-color: #00e5a0 !important;
@@ -819,9 +864,6 @@ else:
             ])
             st.markdown(f"""
             <div style="margin-bottom:1.2rem;">
-                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
-                            color:#4a4f63;letter-spacing:0.18em;text-transform:uppercase;
-                            margin-bottom:8px;">Security Clearance</div>
                 <div>{dots}</div>
                 <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
                             color:#4a4f63;margin-top:5px;letter-spacing:0.1em;">
@@ -838,15 +880,21 @@ else:
 
             if auth_status == True:
                 st.session_state.login_attempts = 0
-                st.rerun()                          # ← this was missing; caused double-click & bleed-through
+                st.session_state.last_activity = time.time()
+                st.rerun()                          
 
             elif auth_status == False:
                 st.session_state.login_attempts += 1
-                if st.session_state.login_attempts >= 3:
+                st.session_state.total_failed_attempts += 1  
+                
+                # Check if they hit the permanent lock (10) OR the temporary lock (3)
+                if st.session_state.total_failed_attempts >= 10 or st.session_state.login_attempts >= 3:
                     st.session_state.lockout_time = time.time()
                     st.rerun()
                 else:
                     attempts_left = 3 - st.session_state.login_attempts
+                    
+                    
                     st.markdown(f"""
                     <div style="background:rgba(255,61,87,0.08);border:1px solid #ff3d57;
                                 border-left:3px solid #ff3d57;padding:0.75rem 1rem;
@@ -856,8 +904,9 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
                     st.stop()
-
-            else:  # None — waiting for input
+                    
+            
+            else:
                 st.stop()
 
 
@@ -1056,14 +1105,11 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    # Fetch the logged-in user's name from memory
-    current_user_name = st.session_state.get("name", "User")
+    if st.session_state.get("authentication_status"):
+        current_user_name = st.session_state.get("name", "User")
+        authenticator.logout("Logout", "sidebar")
+        st.markdown(f"<span style='color:var(--text-muted); font-size: 0.8rem;'>Logged in as: **{current_user_name}**</span>", unsafe_allow_html=True)
 
-    # Secure Logout Button
-    authenticator.logout("Logout", "sidebar")
-    st.markdown(f"<span style='color:var(--text-muted); font-size: 0.8rem;'>Logged in as: **{current_user_name}**</span>", unsafe_allow_html=True)
-
-# Theme Toggle Switch
     def update_theme():
         st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
 
