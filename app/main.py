@@ -5,7 +5,6 @@ import plotly.graph_objs as go
 import numpy as np
 import os
 import json
-import time
 from groq import Groq 
 from dotenv import load_dotenv
 import streamlit_authenticator as stauth 
@@ -20,17 +19,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-st.markdown("""
-<style>
-.block-container { padding-top: 0.5rem !important; }
-.main { padding-top: 0 !important; }
-[data-testid="stAppViewContainer"] { padding-top: 0 !important; }
-header[data-testid="stHeader"] { height: 0 !important; }
-[data-testid="stSidebar"] > div:first-child { padding-top: 0.5rem !important; }
-[data-testid="stToolbar"] { display: none !important; }
-</style>
-""", unsafe_allow_html=True)
 
 # ============================================
 # 1B. THEME STATE
@@ -626,31 +614,14 @@ p code, li code, .ai-stream-box code, [data-testid="stChatMessage"] code {{
         border-color: var(--accent-green) !important;
         color: var(--accent-green) !important;
     }}
-    /* =========================================
-       FIX: CRUSH TOP GAPS & DEAD ZONES
-       ========================================= */
-    /* 1. Shrink the top padding of the main screen */
-    .block-container {{
-        padding-top: 0.5rem !important;
-    }}
-
-    /* 2. Shrink the top padding of the sidebar */
-    [data-testid="stSidebar"] > div:first-child {{
-        padding-top: 0.5rem !important;
-    }}
-
-    /* 3. Collapse the invisible Streamlit header completely */
-    header[data-testid="stHeader"] {{
-        height: 0px !important;
-        min-height: 0px !important;
-    }}
 </style>
 """, unsafe_allow_html=True)
 
 
 # 2B. SECURE AUTHENTICATION
 # ============================================
-# Note: imports moved to top of file (lines 1-11)
+import streamlit_authenticator as stauth
+import time
 
 # 1. Initialize the tracker and timer in memory
 if 'login_attempts' not in st.session_state:
@@ -658,33 +629,16 @@ if 'login_attempts' not in st.session_state:
 if 'lockout_time' not in st.session_state:
     st.session_state.lockout_time = 0
 
-# FIX #2 & #6: Passwords loaded from environment variables (never hardcoded in source).
-# Add these to your .env file:
-#   DEV_PASSWORD=your_dev_key
-#   ADMIN_PASSWORD=your_admin_password
-#   ADMIN_EMAIL=your_email
-#   ADMIN_NAME=Your Name
-# Then run: python -c "import bcrypt; print(bcrypt.hashpw(b'your_password', bcrypt.gensalt()).decode())"
-# and paste the result as ADMIN_PASSWORD_HASH in .env instead, or use the runtime approach below.
-DEV_PASSWORD = os.getenv("DEV_PASSWORD", "")
+DEV_PASSWORD = "Rishabh_DevKey_2026"
 
-# FIX #6: Use pre-hashed password stored in env to avoid deprecated Hasher API.
-# Generate your hash once with: python -c "import streamlit_authenticator as sa; print(sa.Hasher(['yourpass']).generate())"
-# Then set ADMIN_PASSWORD_HASH=<result> in your .env
-raw_admin_pass = os.getenv("ADMIN_PASSWORD", "")
-try:
-    # Works for streamlit-authenticator >= 0.3.x
-    hashed_pass = stauth.Hasher.hash(raw_admin_pass) if raw_admin_pass else ""
-except AttributeError:
-    # Fallback for older versions
-    hashed_pass = stauth.Hasher([raw_admin_pass]).generate()[0] if raw_admin_pass else ""
+# 2. Set up the Authenticator configuration
+hashed_pass = stauth.Hasher.hash('Retainion123')
 
-# FIX #2 (continued): Load admin identity from environment variables
 credentials = {
     "usernames": {
-        os.getenv("ADMIN_USERNAME", "admin"): {
-            "email": os.getenv("ADMIN_EMAIL", ""),
-            "name":  os.getenv("ADMIN_NAME", "Admin"),
+        "Rishabh_admin": {
+            "email": "rishabh@retainion.com",
+            "name": "Rishabh singh",
             "password": hashed_pass
         }
     }
@@ -692,151 +646,220 @@ credentials = {
 
 authenticator = stauth.Authenticate(
     credentials,
-    "retainion_secure_v2",  
+    "retainion_dashboard",
     "auth_cookie_key",
-    1
+    0 
 )
-
 
 # ============================================
 # THE VISUAL LOGIC SWITCH
 # ============================================
 if st.session_state.get("authentication_status"):
-    
-    # --- 10-MINUTE INACTIVITY TRACKER ---
-    current_time = time.time()
-    
-    if 'last_activity' in st.session_state:
-        # 600 seconds = 10 minutes. If they are idle longer than this, boot them out.
-        if current_time - st.session_state.last_activity > 600:
-            st.session_state["authentication_status"] = None
-            st.session_state["username"] = None
-            st.session_state["name"] = None
-            st.session_state["logout"] = True
-            
-            st.warning("🔒 Session expired due to 10 minutes of inactivity. Please log in again.")
-            time.sleep(2)
-            st.rerun()
-            
-    # If they clicked anything, update their activity timer to right now
-    st.session_state.last_activity = current_time
-
     # IF LOGGED IN: Reset attempts and skip drawing the login UI entirely!
     st.session_state.login_attempts = 0
     
 else:
-    # 1. RESERVE SPACE AT THE TOP (This guarantees no flicker!)
-    header_placeholder = st.empty()
-    lockout_placeholder = st.empty()
-    
-    # 2. CHECK COOKIE / DRAW LOGIN WIDGET
-    # We execute this before drawing headers. If the cookie is valid, 
-    # the widget stays invisible and we instantly bypass the UI!
-    _, form_col, _ = st.columns([1, 1.5, 1])
-    with form_col:
+    # IF NOT LOGGED IN: Draw the branded login screen
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    _, text_col, _ = st.columns([1, 2, 1])
+
+    with text_col:
         st.markdown("""
-        <style>
-        [data-testid="stFormSubmitButton"] { display: flex; justify-content: center; margin-top: 0.5rem; }
-        [data-testid="stFormSubmitButton"] button { width: 100% !important; max-width: 250px !important; }
-        </style>
+        <div style="text-align:center;margin-bottom:2rem;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;
+                        letter-spacing:0.28em;color:#00e5a0;text-transform:uppercase;
+                        margin-bottom:0.9rem;">
+                ◈ &nbsp; Intelligence Platform &nbsp; ◈
+            </div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:4rem;
+                        font-weight:800;letter-spacing:0.08em;color:#e2ddd6;
+                        text-transform:uppercase;line-height:0.95;">
+                RE<span style="color:#00e5a0;">TAINION</span>
+            </div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;
+                        color:#4a4f63;letter-spacing:0.18em;text-transform:uppercase;
+                        margin-top:0.6rem;">
+                Authorised Access Only — Credentials Required
+            </div>
+            <div style="width:48px;height:3px;background:#00e5a0;margin:1.2rem auto 0;"></div>
+        </div>
         """, unsafe_allow_html=True)
-        
-        # Only draw the login boxes if they aren't locked out
-        if st.session_state.login_attempts < 3:
-            authenticator.login("main")
-            
-    # 3. EVALUATE AUTHENTICATION STATUS
-    auth_status = st.session_state.get("authentication_status")
 
-    if auth_status == True:
-        # ✅ COOKIE IS VALID: Instantly reload into the dashboard (ZERO FLICKER)
-        st.rerun()
-
-    else:
-        # ❌ NO COOKIE: Safely draw the branding headers in the reserved space
-        with header_placeholder.container():
-            st.markdown("<br>", unsafe_allow_html=True)
-            _, text_col, _ = st.columns([1, 2, 1])
-            with text_col:
-                st.markdown("""
-                <div style="text-align: center; margin-bottom: 1.5rem;">
-                    <div style="font-family: var(--font-display); font-size: 3.5rem; font-weight: 800; letter-spacing: 0.12em; color: var(--accent-green); line-height: 1.2; white-space: nowrap;">USERS</div>
-                    <div style="font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; letter-spacing: 0.10em; color: var(--text-primary); line-height: 1.2; white-space: nowrap;">VERIFICATION LOGIN</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-        # --- Handle Failed Logins ---
-        if auth_status == False:
-            st.session_state.login_attempts += 1
-            if st.session_state.login_attempts >= 3:
-                st.session_state.lockout_time = time.time()
-                st.rerun()
-            else:
-                with form_col:
-                    attempts_left = 3 - st.session_state.login_attempts
-                    st.error(f"Incorrect password. {attempts_left} attempts remaining.")
-                st.stop()
-
-        # --- Handle System Lockout ---
+        # Handle the Lockout Timer UI
         if st.session_state.login_attempts >= 3:
             elapsed_time = time.time() - st.session_state.lockout_time
             remaining_time = int(120 - elapsed_time)
             
             if remaining_time > 0:
-                with lockout_placeholder.container():
-                    import streamlit.components.v1 as components
-                    _, lock_col, _ = st.columns([1, 1.5, 1])
-                    with lock_col:
-                        st.error("🔒 SYSTEM LOCKED: Too many failed attempts.")
-                        
-                        timer_html = f"""
-                        <style>
-                            body {{ margin: 0; font-family: sans-serif; background-color: transparent; }}
-                            .warning-box {{ border-left: 4px solid #f5a623; background-color: rgba(245, 166, 35, 0.1); color: #8a8fa8; padding: 0.8rem 1rem; border-radius: 4px; font-size: 0.9rem; }}
-                            .highlight {{ color: #f5a623; font-family: monospace; font-size: 1.05rem; font-weight: bold; }}
-                        </style>
-                        <div class="warning-box">
-                            Please wait <span class="highlight" id="time">{remaining_time}</span><span class="highlight"> seconds</span> before trying again.
-                        </div>
-                        <script>
-                            let timeLeft = {remaining_time};
-                            const timerEl = document.getElementById('time');
-                            const countdown = setInterval(() => {{
-                                timeLeft--;
-                                if(timerEl) timerEl.innerText = timeLeft;
-                                if(timeLeft <= 0) {{ clearInterval(countdown); window.parent.location.reload(); }}
-                            }}, 1000);
-                        </script>
-                        """
-                        components.html(timer_html, height=70)
-                        
-                        dev_input = st.text_input("Developer Key", type="password")
-                        if st.button("Unlock System", use_container_width=True):
-                            if dev_input == DEV_PASSWORD:
-                                st.session_state.login_attempts = 0
-                                st.session_state.lockout_time = 0
-                                st.session_state['authentication_status'] = None
-                                st.success("System unlocked! Refreshing...")
-                                time.sleep(1)
-                                st.rerun()
-                            else:
-                                st.error("Access Denied: Invalid Developer Key.")
+                import streamlit.components.v1 as components
+                
+                _, lock_col, _ = st.columns([1, 1.5, 1])
+                with lock_col:
+                    st.error("🔒 SYSTEM LOCKED: Too many failed attempts.")
+                    
+                    # 1. Automatic Live Countdown (Powered by JavaScript to prevent typing interruptions)
+                    timer_html = f"""
+                    <style>
+                        body {{ margin: 0; font-family: sans-serif; background-color: transparent; }}
+                        .warning-box {{
+                            border-left: 4px solid #f5a623;
+                            background-color: rgba(245, 166, 35, 0.1);
+                            color: #8a8fa8; 
+                            padding: 0.8rem 1rem;
+                            border-radius: 4px;
+                            font-size: 0.9rem;
+                        }}
+                        .highlight {{ color: #f5a623; font-family: monospace; font-size: 1.05rem; font-weight: bold; }}
+                    </style>
+                    <div class="warning-box">
+                        Please wait <span class="highlight" id="time">{remaining_time}</span><span class="highlight"> seconds</span> before trying again.
+                    </div>
+                    <script>
+                        let timeLeft = {remaining_time};
+                        const timerEl = document.getElementById('time');
+                        const countdown = setInterval(() => {{
+                            timeLeft--;
+                            if(timerEl) timerEl.innerText = timeLeft;
+                            if(timeLeft <= 0) {{
+                                clearInterval(countdown);
+                                window.parent.location.reload(); // Instantly reloads the page to unlock
+                            }}
+                        }}, 1000);
+                    </script>
+                    """
+                    components.html(timer_html, height=70)
+                    
+                    # 2. Developer Key Input 
+                    dev_input = st.text_input("Developer Key", type="password")
+                    
+                    # 3. Removed the "Refresh Timer" column entirely!
+                    if st.button("Unlock System", use_container_width=True):
+                        if dev_input == DEV_PASSWORD:
+                            st.session_state.login_attempts = 0
+                            st.session_state.lockout_time = 0
+                            st.session_state['authentication_status'] = None
+                            st.success("System unlocked! Refreshing...")
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error("Access Denied: Invalid Developer Key.")
                 st.stop()
             else:
                 st.session_state.login_attempts = 0
                 st.session_state.lockout_time = 0
                 st.session_state['authentication_status'] = None
-                st.rerun()
 
-        # --- Stop Execution if Waiting for Input ---
-        if auth_status == None:
-            st.stop() 
+        # ── LOGIN FORM ────────────────────────────────────────────────────────
+        _, form_col, _ = st.columns([1, 1.5, 1])
+        with form_col:
+            st.markdown("""
+            <style>
+            /* ── Card wrapper ── */
+            div[data-testid="stVerticalBlock"]:has(> div > [data-testid="stForm"]) {
+                background: #0f1119;
+                border: 1px solid #1c1f2e;
+                border-top: 3px solid #00e5a0;
+                padding: 2rem 2rem 1.5rem;
+                border-radius: 2px;
+            }
 
+            /* ── Input labels ── */
+            [data-testid="stForm"] [data-testid="stTextInput"] label {
+                font-family: 'IBM Plex Mono', monospace !important;
+                font-size: 0.62rem !important;
+                color: #4a4f63 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.2em !important;
+                font-weight: 600 !important;
+            }
 
-# FIX #3: Hard-stop if user is not authenticated.
-# Nothing below (model loading, sidebar, pages) runs until the user is logged in.
-if not st.session_state.get("authentication_status"):
-    st.stop()
+            /* ── Input boxes ── */
+            [data-testid="stForm"] [data-testid="stTextInput"] input {
+                background: #07080d !important;
+                border: 1px solid #2a2f45 !important;
+                border-bottom: 2px solid #00e5a0 !important;
+                border-radius: 0 !important;
+                color: #e2ddd6 !important;
+                font-family: 'IBM Plex Mono', monospace !important;
+                font-size: 0.88rem !important;
+                padding: 0.65rem 0.9rem !important;
+            }
+            [data-testid="stForm"] [data-testid="stTextInput"] input:focus {
+                border-color: #00e5a0 !important;
+                box-shadow: 0 0 0 1px rgba(0,229,160,0.2) !important;
+            }
+
+            /* ── Submit button ── */
+            [data-testid="stFormSubmitButton"] { margin-top: 0.8rem; }
+            [data-testid="stFormSubmitButton"] button {
+                width: 100% !important;
+                background: #00e5a0 !important;
+                color: #07080d !important;
+                border: none !important;
+                border-radius: 0 !important;
+                font-family: 'IBM Plex Mono', monospace !important;
+                font-size: 0.75rem !important;
+                font-weight: 700 !important;
+                letter-spacing: 0.2em !important;
+                text-transform: uppercase !important;
+                padding: 0.8rem !important;
+            }
+            [data-testid="stFormSubmitButton"] button:hover {
+                opacity: 0.85 !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+
+            # Attempt indicator
+            used = st.session_state.login_attempts
+            left = 3 - used
+            dots = "".join([
+                f'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:{"#ff3d57" if i < used else "#1c1f2e"};border:1px solid {"#ff3d57" if i < used else "#2a2f45"};"></span>'
+                for i in range(3)
+            ])
+            st.markdown(f"""
+            <div style="margin-bottom:1.2rem;">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;
+                            color:#4a4f63;letter-spacing:0.18em;text-transform:uppercase;
+                            margin-bottom:8px;">Security Clearance</div>
+                <div>{dots}</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;
+                            color:#4a4f63;margin-top:5px;letter-spacing:0.1em;">
+                    {left} of 3 attempts remaining
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            authenticator.login("main")
+
+            # ── CRITICAL BUG FIX: rerun immediately on success so the
+            #    dashboard renders cleanly without the login form above it ──
+            auth_status = st.session_state.get("authentication_status")
+
+            if auth_status == True:
+                st.session_state.login_attempts = 0
+                st.rerun()                          # ← this was missing; caused double-click & bleed-through
+
+            elif auth_status == False:
+                st.session_state.login_attempts += 1
+                if st.session_state.login_attempts >= 3:
+                    st.session_state.lockout_time = time.time()
+                    st.rerun()
+                else:
+                    attempts_left = 3 - st.session_state.login_attempts
+                    st.markdown(f"""
+                    <div style="background:rgba(255,61,87,0.08);border:1px solid #ff3d57;
+                                border-left:3px solid #ff3d57;padding:0.75rem 1rem;
+                                font-family:'IBM Plex Mono',monospace;font-size:0.7rem;
+                                color:#ff3d57;letter-spacing:0.05em;margin-top:0.5rem;">
+                        ✖ &nbsp; Invalid credentials — {attempts_left} attempt{'s' if attempts_left != 1 else ''} remaining
+                    </div>
+                    """, unsafe_allow_html=True)
+                    st.stop()
+
+            else:  # None — waiting for input
+                st.stop()
+
 
 # 3. LOAD ARTIFACTS
 @st.cache_resource
@@ -857,9 +880,7 @@ def load_artifacts():
 
     try:
         explainer = joblib.load(os.path.join(model_dir, 'shap_explainer.pkl'))
-    except Exception as e:
-        # FIX #4: Catch specific exceptions so real errors aren't silently swallowed
-        st.warning(f"SHAP explainer not loaded (explainability disabled): {e}")
+    except:
         explainer = None
 
     feature_names = metadata['feature_names']
@@ -874,12 +895,11 @@ def load_artifacts():
     )
     customer_db_sorted = customer_db.sort_values('churn_probability', ascending=False)
 
-    # FIX #10: Return feature_names so it's not extracted twice outside this function
-    return model, customer_db, customer_db_sorted, metadata, explainer, feature_names
+    return model, customer_db, customer_db_sorted, metadata, explainer
 
 # Instantly unpack the pre-calculated data from memory on every page switch
-model, customer_db, customer_db_sorted, metadata, explainer, feature_names = load_artifacts()
-# FIX #10: feature_names is now returned directly — no need to re-extract from metadata here
+model, customer_db, customer_db_sorted, metadata, explainer = load_artifacts()
+feature_names = metadata['feature_names']
 
 
 # ============================================
@@ -921,12 +941,14 @@ def get_chart_colors():
         }
 
 def get_chart_height(default_height=400):
-    """Returns responsive chart height — smaller for mobile.
-    FIX #5: Actually return the mobile height instead of always returning default."""
+    """Returns responsive chart height - smaller for mobile"""
     is_mobile = st.query_params.get("mobile", "false") == "true"
-    return int(default_height * 0.6) if is_mobile else default_height
 
-# FIX #9: Removed empty st.markdown block (dead code placeholder for unimplemented mobile script)
+    return default_height
+
+# Add mobile detection script
+st.markdown("""
+""", unsafe_allow_html=True)
 
 # ============================================
 # 5. AI HELPERS
@@ -983,8 +1005,7 @@ def get_shap_factors(customer_dict: dict):
              "effect": "increases" if s > 0 else "decreases"}
             for f, v, s in zip(feature_names, X.values[0], vals)
         ], key=lambda x: abs(x["impact"]), reverse=True)[:5]
-    except Exception:
-        # FIX #4: Use specific exception type instead of bare except
+    except:
         return []
 
 
@@ -1185,9 +1206,9 @@ if page == "1. Live Predictor":
         
         fig = go.Figure()
         
-        # Trace 0 -> "Current Customer"
+        # Trace 0 -> Renamed to "Current Customer"
         fig.add_trace(go.Scatter3d(
-            name='Current Customer', 
+            name='Current Customer',  # <--- ADDED PROPER NAME
             x=[recency], y=[frequency], z=[monetary],
             mode='markers',
             hovertemplate=(
@@ -1203,7 +1224,7 @@ if page == "1. Live Predictor":
         
         # Trace 1 ->"Benchmarks"
         fig.add_trace(go.Scatter3d(
-            name='Benchmarks', 
+            name='Benchmarks',  # <--- ADDED PROPER NAME
             x=[15, 310], y=[45, 1], z=[9000, 40],
             mode='text',
             text=['◆ Champions', '◆ Churned'],
@@ -1298,8 +1319,7 @@ Write a sharp, specific retention strategy:
 Be direct. Reference their actual numbers. No generic advice."""
 
                 placeholder = st.empty()
-                with st.spinner("🧠 AI is analyzing customer behavior..."):
-                    stream_to_placeholder(prompt, placeholder)
+                stream_to_placeholder(prompt, placeholder)
             else:
                 st.markdown(
                     '<div class="ai-stream-box" style="color:var(--text-muted);font-size:0.78rem">'
@@ -1333,8 +1353,7 @@ elif page == "2. AI Chat Analyst":
     triggered = None
     for btn, (label, question) in zip([qc1, qc2, qc3, qc4], questions.items()):
         with btn:
-            # FIX #8: Removed unnecessary walrus operator (:=) — label is already in scope
-            if st.button(label, use_container_width=True):
+            if st.button(btn_label := label, use_container_width=True):
                 triggered = question
 
     st.markdown('<div class="section-label">Conversation</div>', unsafe_allow_html=True)
@@ -1442,12 +1461,9 @@ elif page == "3. Risk Overview":
     with c1:
         st.markdown('<div class="section-label">Risk Distribution</div>', unsafe_allow_html=True)
         rc = customer_db['risk_level'].value_counts()
-        # FIX #7: Map colors by label name so HIGH is always red regardless of sort order
-        _pie_color_map = {'HIGH': '#ff3d57', 'MEDIUM': '#f5a623', 'LOW': '#00e5a0'}
-        _pie_colors = [_pie_color_map.get(lbl, '#8a8fa8') for lbl in rc.index]
         fig_d = go.Figure(go.Pie(
             labels=rc.index, values=rc.values,
-            marker_colors=_pie_colors,
+            marker_colors=['#ff3d57', '#f5a623', '#00e5a0'],
             hole=0.55,
             textfont=dict(family='IBM Plex Mono', size=10, color=chart_colors['text_color']),
             hovertemplate='%{label}<br>%{value:,} customers<br>%{percent}<extra></extra>'
@@ -1585,12 +1601,10 @@ elif page == "4. At-Risk Customers":
                 
                 prob = float(top['churn_probability'])
                 factors = get_shap_factors(top.to_dict())
-                # FIX #1: Corrected indentation — facts, prompt, and expander must be
-                # inside the else block so top/prob/factors are always defined before use.
-                facts = "\n".join([f"- {f['feature']}: {f['value']:.2f} ({f['effect']} churn)"
-                                   for f in factors]) or "N/A"
+            facts   = "\n".join([f"- {f['feature']}: {f['value']:.2f} ({f['effect']} churn)"
+                                 for f in factors]) or "N/A"
 
-                prompt = f"""Most at-risk customer analysis:
+            prompt = f"""Most at-risk customer analysis:
 
 Risk: {prob:.1%} | Inactive: {top['Recency']:.0f}d | LTV: ${top['Monetary']:.0f}
 Orders: {top['Frequency']:.0f} | Products: {top['product_diversity']:.0f}
@@ -1606,10 +1620,9 @@ Provide:
 
 Sharp and direct. No fluff."""
 
-                with st.expander("◈ AI Retention Strategy", expanded=True):
-                    ph = st.empty()
-                    with st.spinner("🧠 Generating targeted retention strategy..."):
-                        stream_to_placeholder(prompt, ph)
+            with st.expander("◈ AI Retention Strategy", expanded=True):
+                ph = st.empty()
+                stream_to_placeholder(prompt, ph)
 
 
 # ============================================
@@ -1663,8 +1676,7 @@ Sentence 5: 30-day target metric
 Executive tone. Data-driven. No bullet points."""
 
             ph = st.empty()
-            with st.spinner("🧠 Drafting board-level executive brief..."):
-                stream_to_placeholder(prompt, ph)
+            stream_to_placeholder(prompt, ph)
         else:
             st.markdown(
                 '<div class="ai-stream-box" style="color:var(--text-muted);font-size:0.78rem">'
@@ -1793,9 +1805,8 @@ elif page == "6. Batch Scorer":
             with c3:
                 st.metric("Average Churn Risk", f"{avg_risk_batch:.1%}")
             
-            # Safe preview of the freshly scored data
-            st.caption(f"Showing top 100 highest-risk customers out of {len(batch_df):,}")
-            st.dataframe(batch_df.head(100), use_container_width=True)
+            # Display the freshly scored data
+            st.dataframe(batch_df.head(len(batch_df)), use_container_width=True)
             
             # --- DOWNLOAD BUTTON ---
             st.markdown('<div class="section-label">Export Intelligence</div>', unsafe_allow_html=True)
