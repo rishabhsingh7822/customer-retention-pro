@@ -1,0 +1,938 @@
+/* Target modern Streamlit classes and all text elements to fix invisible text */
+html,
+body,
+[class*="css"],
+[class*="st-"],
+p,
+span,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+li,
+label {
+    font-family: var(--font-body) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Force background colors on all Streamlit containers */
+.main,
+.block-container,
+[data-testid="stAppViewContainer"],
+[data-testid="stHeader"],
+.stApp {
+    background-color: var(--bg-primary) !important;
+}
+
+/* Column backgrounds */
+[data-testid="column"] {
+    background-color: var(--bg-primary) !important;
+}
+
+/* Ensure all input containers have proper background */
+[data-testid="stVerticalBlock"]>div {
+    background-color: transparent !important;
+}
+
+/* Form elements background */
+[data-testid="stForm"] {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    padding: 1rem !important;
+    border-radius: 4px !important;
+}
+
+#MainMenu,
+footer {
+    visibility: hidden;
+}
+
+header {
+    background: transparent !important;
+}
+
+.block-container {
+    padding: 1.5rem 2rem !important;
+    max-width: 100% !important;
+}
+
+[data-testid="stSidebar"] {
+    background: var(--bg-secondary) !important;
+    border-right: 2px solid var(--border) !important;
+}
+
+[data-testid="stSidebar"]>div:first-child {
+    padding-top: 1.5rem;
+}
+
+/* Header area where toggle button lives */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+}
+
+/* Ensure buttons are always visible and above other elements */
+[data-testid="stSidebarNav"] {
+    z-index: 999998 !important;
+}
+
+.sidebar-brand {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    color: var(--accent-green);
+    text-transform: uppercase;
+    padding: 0 1rem 1rem;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+.sidebar-brand span {
+    color: var(--text-secondary);
+    font-weight: 300;
+}
+
+.visibility-selector {
+    background: var(--bg-card);
+    border: 2px solid var(--border-bright);
+    padding: 0.8rem;
+    margin: 0 1rem 1.5rem;
+    border-radius: 6px;
+}
+
+.visibility-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+[data-testid="stRadio"] label {
+    font-family: var(--font-mono) !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.08em !important;
+    color: var(--text-primary) !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+}
+
+[data-testid="stRadio"] div[data-baseweb="radio"] div {
+    background: transparent !important;
+    border: none !important;
+}
+
+.stat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 1rem;
+    border-top: 2px solid var(--border);
+    margin-top: 1rem;
+}
+
+.stat-pill {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    padding: 8px 10px;
+    border-radius: 4px;
+}
+
+.stat-pill .label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.stat-pill .value {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent-green);
+}
+
+.page-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.page-title {
+    font-family: var(--font-display);
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.page-tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--accent-green);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: 2px solid var(--accent-green);
+    padding: 3px 8px;
+    border-radius: 2px;
+    font-weight: 600;
+}
+
+.page-subtitle {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    background: var(--border-bright);
+    border: 2px solid var(--border-bright);
+    margin-bottom: 1.5rem;
+}
+
+.kpi-card {
+    background: var(--bg-card);
+    padding: 1.2rem 1.4rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-color, var(--accent-green));
+}
+
+.kpi-label {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.kpi-value {
+    font-family: var(--font-mono);
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+    display: block;
+}
+
+.kpi-sub {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    display: block;
+}
+
+.section-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    padding: 0.8rem 0 0.4rem;
+    border-top: 2px solid var(--border);
+    margin: 1rem 0 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.section-label::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+}
+
+[data-testid="stDataFrame"] {
+    border: 2px solid var(--border-bright) !important;
+}
+
+[data-testid="stDataFrame"] th {
+    background: var(--bg-secondary) !important;
+    font-family: var(--font-mono) !important;
+    font-size: 0.65rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+}
+
+[data-testid="stDataFrame"] td {
+    font-family: var(--font-mono) !important;
+    font-size: 0.78rem !important;
+    color: var(--text-primary) !important;
+}
+
+[data-testid="stButton"]>button {
+    font-family: var(--font-mono) !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.12em !important;
+    background: transparent !important;
+    color: var(--accent-green) !important;
+    border: 2px solid var(--accent-green) !important;
+    border-radius: 2px !important;
+    padding: 0.5rem 1.2rem !important;
+    transition: all 0.15s ease !important;
+}
+
+[data-testid="stButton"]>button:hover {
+    background: var(--accent-green) !important;
+    color: var(--bg-primary) !important;
+}
+
+[data-testid="stButton"]>button[kind="primary"] {
+    background: var(--accent-green) !important;
+    color: var(--bg-primary) !important;
+    font-weight: 700 !important;
+}
+
+[data-testid="stButton"]>button[kind="primary"]:hover {
+    opacity: 0.85 !important;
+}
+
+[data-testid="stSlider"] label {
+    font-family: var(--font-mono) !important;
+    font-size: 0.7rem !important;
+    color: var(--text-primary) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    font-weight: 600 !important;
+}
+
+.stSlider>div>div>div>div {
+    background: var(--accent-green) !important;
+}
+
+[data-testid="stNumberInput"] label,
+[data-testid="stSelectbox"] label {
+    font-family: var(--font-mono) !important;
+    font-size: 0.7rem !important;
+    color: var(--text-primary) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    font-weight: 600 !important;
+}
+
+/* Input boxes background */
+[data-testid="stNumberInput"] input,
+[data-testid="stTextInput"] input {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-bright) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Select box background */
+[data-baseweb="select"]>div {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-bright) !important;
+    color: var(--text-primary) !important;
+}
+
+.ai-stream-box {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-bright);
+    border-left: 4px solid var(--accent-green);
+    padding: 1.2rem 1.4rem;
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: var(--text-primary);
+    border-radius: 0 4px 4px 0;
+    min-height: 80px;
+}
+
+[data-testid="stChatMessage"] {
+    background: var(--bg-card) !important;
+    border: 2px solid var(--border) !important;
+    border-radius: 4px !important;
+    font-family: var(--font-body) !important;
+}
+
+/* Fix Chat Input Background and Blinking Cursor */
+[data-testid="stChatInput"]>div,
+[data-testid="stChatInput"] div[data-baseweb="base-input"] {
+    background-color: var(--bg-card) !important;
+}
+
+[data-testid="stChatInput"] textarea {
+    font-family: var(--font-mono) !important;
+    font-size: 0.82rem !important;
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 2px solid var(--border-bright) !important;
+    caret-color: var(--accent-green) !important;
+    /* Forces cursor to be visible and green */
+}
+
+[data-testid="stChatInput"] textarea::placeholder {
+    color: var(--text-muted) !important;
+    /* Ensures placeholder text is legible */
+}
+
+/* Fix AI Markdown Inline Code (Numbers and Highlights) */
+p code,
+li code,
+.ai-stream-box code,
+[data-testid="stChatMessage"] code {
+    background-color: var(--bg-elevated) !important;
+    color: var(--accent-green) !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-family: var(--font-mono) !important;
+    font-size: 0.9em !important;
+}
+
+.badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border-radius: 3px;
+}
+
+.badge-high {
+    background: rgba(214, 48, 49, 0.2);
+    color: var(--accent-red);
+    border: 2px solid var(--accent-red);
+}
+
+.badge-medium {
+    background: rgba(230, 126, 0, 0.2);
+    color: var(--accent-amber);
+    border: 2px solid var(--accent-amber);
+}
+
+.badge-low {
+    background: rgba(0, 170, 0, 0.15);
+    color: var(--accent-green);
+    border: 2px solid var(--accent-green);
+}
+
+.shap-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 2px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+}
+
+.shap-feature {
+    color: var(--text-primary);
+    flex: 1;
+    font-weight: 500;
+}
+
+.shap-value {
+    color: var(--text-primary);
+    font-weight: 700;
+    width: 60px;
+    text-align: right;
+}
+
+.shap-bar-wrap {
+    width: 80px;
+    background: var(--bg-elevated);
+    height: 6px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+}
+
+.shap-bar-pos {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--accent-red);
+}
+
+.shap-bar-neg {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--accent-green);
+}
+
+[data-testid="stExpander"] {
+    background: var(--bg-card) !important;
+    border: 2px solid var(--border) !important;
+    border-radius: 4px !important;
+}
+
+[data-testid="stExpander"] summary {
+    font-family: var(--font-mono) !important;
+    font-size: 0.72rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+}
+
+[data-baseweb="select"] {
+    background: var(--bg-card) !important;
+    border: 2px solid var(--border-bright) !important;
+    font-family: var(--font-mono) !important;
+    font-size: 0.78rem !important;
+    color: var(--text-primary) !important;
+}
+
+[data-testid="stInfo"] {
+    background: rgba(77, 156, 255, 0.1) !important;
+    border: 2px solid var(--accent-blue) !important;
+    border-left: 4px solid var(--accent-blue) !important;
+    font-family: var(--font-body) !important;
+    font-size: 0.84rem !important;
+    border-radius: 0 4px 4px 0 !important;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-bright);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
+@media screen and (max-width: 768px) {
+
+    /* Container adjustments */
+    .block-container {
+        padding: 1rem 0.75rem !important;
+    }
+
+    /* Header scaling */
+    .page-title {
+        font-size: 1.8rem !important;
+        line-height: 1.1 !important;
+    }
+
+    .page-tag {
+        font-size: 0.6rem !important;
+        padding: 2px 6px !important;
+    }
+
+    .page-subtitle {
+        font-size: 0.65rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* KPI Grid - 2 columns on mobile */
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1px !important;
+    }
+
+    .kpi-card {
+        padding: 1rem 1rem !important;
+    }
+
+    .kpi-label {
+        font-size: 0.58rem !important;
+        margin-bottom: 0.4rem !important;
+    }
+
+    .kpi-value {
+        font-size: 1.5rem !important;
+    }
+
+    .kpi-sub {
+        font-size: 0.58rem !important;
+    }
+
+    /* Sidebar brand */
+    .sidebar-brand {
+        font-size: 1.1rem !important;
+        padding: 0 0.75rem 0.75rem !important;
+    }
+
+    /* Visibility selector */
+    .visibility-selector {
+        padding: 0.6rem !important;
+        margin: 0 0.75rem 1rem !important;
+    }
+
+    .visibility-label {
+        font-size: 0.6rem !important;
+    }
+
+    /* Radio buttons - larger touch targets */
+    [data-testid="stRadio"] label {
+        font-size: 0.7rem !important;
+        padding: 0.5rem 0 !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    /* Stat pills in sidebar - 1 column */
+    .stat-row {
+        grid-template-columns: 1fr !important;
+        gap: 4px !important;
+        padding: 0.75rem !important;
+    }
+
+    .stat-pill {
+        padding: 10px 12px !important;
+    }
+
+    .stat-pill .label {
+        font-size: 0.58rem !important;
+    }
+
+    .stat-pill .value {
+        font-size: 0.95rem !important;
+    }
+
+    /* Section labels */
+    .section-label {
+        font-size: 0.6rem !important;
+        padding: 0.6rem 0 0.3rem !important;
+        margin: 0.75rem 0 0.6rem !important;
+    }
+
+    /* Buttons - larger touch targets */
+    [data-testid="stButton"]>button {
+        font-size: 0.68rem !important;
+        padding: 0.65rem 1rem !important;
+        min-height: 44px !important;
+    }
+
+    /* Forms and inputs - larger touch targets */
+    [data-testid="stNumberInput"] input,
+    [data-testid="stSelectbox"] select,
+    [data-testid="stSlider"] {
+        min-height: 44px !important;
+        font-size: 0.85rem !important;
+    }
+
+    [data-testid="stNumberInput"] label,
+    [data-testid="stSelectbox"] label,
+    [data-testid="stSlider"] label {
+        font-size: 0.68rem !important;
+    }
+
+    /* Tables */
+    [data-testid="stDataFrame"] th {
+        font-size: 0.6rem !important;
+        padding: 8px 4px !important;
+    }
+
+    [data-testid="stDataFrame"] td {
+        font-size: 0.72rem !important;
+        padding: 8px 4px !important;
+    }
+
+    /* AI stream box */
+    .ai-stream-box {
+        padding: 1rem 1rem !important;
+        font-size: 0.82rem !important;
+        line-height: 1.6 !important;
+    }
+
+    /* Chat interface */
+    [data-testid="stChatMessage"] {
+        padding: 0.75rem !important;
+        font-size: 0.82rem !important;
+    }
+
+    [data-testid="stChatInput"] textarea {
+        font-size: 0.85rem !important;
+        min-height: 44px !important;
+    }
+
+    /* Badges */
+    .badge {
+        font-size: 0.58rem !important;
+        padding: 4px 8px !important;
+    }
+
+    /* SHAP visualization */
+    .shap-row {
+        font-size: 0.68rem !important;
+        padding: 8px 0 !important;
+        flex-wrap: wrap !important;
+    }
+
+    .shap-feature {
+        flex: 0 0 100% !important;
+        margin-bottom: 4px !important;
+    }
+
+    .shap-value {
+        width: 50px !important;
+    }
+
+    .shap-bar-wrap {
+        width: 60px !important;
+        height: 8px !important;
+    }
+
+    /* Expanders */
+    [data-testid="stExpander"] summary {
+        font-size: 0.68rem !important;
+        padding: 0.75rem !important;
+        min-height: 44px !important;
+    }
+}
+
+/* Tablet adjustments (768px - 1024px) */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    .page-title {
+        font-size: 2.2rem !important;
+    }
+
+    /* KPI Grid - 2 columns on tablet */
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .kpi-card {
+        padding: 1.1rem 1.2rem !important;
+    }
+
+    .kpi-value {
+        font-size: 1.7rem !important;
+    }
+}
+
+/* =========================================
+       PROTECT UI ICONS & DATAFRAME ARROWS
+       ========================================= */
+/* 1. Restore the original font for all Streamlit UI icons */
+.material-symbols-rounded,
+.material-icons,
+[class*="icon"],
+[class*="stIcon"] {
+    font-family: 'Material Symbols Rounded', 'Material Icons' !important;
+}
+
+/* 2. Ensure DataFrame sorting arrows and UI SVGs don't disappear into the background */
+svg {
+    fill: var(--text-primary) !important;
+}
+
+/* 3. Make DataFrame headers specifically pop in all modes */
+[data-testid="stDataFrame"] th {
+    border-bottom: 2px solid var(--accent-green) !important;
+}
+
+/* 4. Ensure Dropdown/Selectbox arrows are visible */
+[data-baseweb="select"] svg {
+    fill: var(--text-primary) !important;
+}
+
+/* =========================================
+       FIX: SIDEBAR TOGGLE & VISIBILITY (V7 MAX-SPECIFICITY)
+       ========================================= */
+header {
+    visibility: visible !important;
+    background: transparent !important;
+    z-index: 99999 !important;
+}
+
+#MainMenu,
+footer {
+    visibility: hidden !important;
+}
+
+/* 1. Lock the hitbox size and physically throw native text off-screen */
+html body div[data-testid="stSidebarCollapseButton"],
+html body div[data-testid="collapsedControl"] {
+    position: relative !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+    color: transparent !important;
+    text-indent: -9999px !important;
+    /* Throw text off screen */
+    overflow: hidden !important;
+}
+
+/* 2. MAX SPECIFICITY: Target ONLY the visual spans/icons and nuke them. 
+          We avoid '*' so we don't accidentally delete Streamlit's click listener */
+html body div[data-testid="stSidebarCollapseButton"] span,
+html body div[data-testid="stSidebarCollapseButton"] svg,
+html body div[data-testid="stSidebarCollapseButton"] i,
+html body div[data-testid="collapsedControl"] span,
+html body div[data-testid="collapsedControl"] svg,
+html body div[data-testid="collapsedControl"] i {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* 3. Inject the UNHIDE ICON (Sleek right arrow) */
+html body div[data-testid="collapsedControl"]::after {
+    content: "❯" !important;
+    font-size: 1.6rem !important;
+    color: var(--text-primary) !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    pointer-events: none !important;
+    text-indent: 0 !important;
+    /* Pull the icon back on-screen */
+    visibility: visible !important;
+}
+
+/* 4. Inject X to HIDE */
+html body div[data-testid="stSidebarCollapseButton"]::after {
+    content: "✖" !important;
+    font-size: 1.2rem !important;
+    color: var(--text-muted) !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    pointer-events: none !important;
+    text-indent: 0 !important;
+    /* Pull the icon back on-screen */
+    visibility: visible !important;
+}
+
+html body div[data-testid="stSidebarCollapseButton"]:hover::after {
+    color: var(--accent-red) !important;
+}
+
+/* =========================================
+       ULTIMATE DATAFRAME MENU & POPOVER OVERLAP FIX
+       ========================================= */
+/* Force the popover container background */
+div[data-baseweb="popover"] {
+    background-color: var(--bg-card) !important;
+}
+
+ul[data-baseweb="menu"] {
+    background-color: var(--bg-card) !important;
+}
+
+/* Force menu items to expand their height automatically and align content */
+ul[data-baseweb="menu"] li {
+    height: auto !important;
+    min-height: 38px !important;
+    padding: 8px 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-direction: row !important;
+}
+
+/* Strictly forbid text from wrapping or stacking */
+ul[data-baseweb="menu"] li span,
+ul[data-baseweb="menu"] li div,
+ul[data-baseweb="menu"] li p {
+    white-space: nowrap !important;
+    line-height: normal !important;
+    height: auto !important;
+    margin: 0 !important;
+    display: inline-block !important;
+}
+
+/* Ensure the sorting/filtering icons have proper space and don't shrink */
+ul[data-baseweb="menu"] li svg {
+    flex-shrink: 0 !important;
+    margin-right: 12px !important;
+    display: inline-block !important;
+}
+
+/* =========================================
+       FILE UPLOADER LIGHT/DARK MODE (FINAL)
+       ========================================= */
+/* 1. Target the actual HTML section of the uploader */
+[data-testid="stFileUploader"] section {
+    background-color: var(--bg-card) !important;
+    border: 2px dashed var(--border-bright) !important;
+    border-radius: 6px !important;
+}
+
+/* 2. Force inner wrappers to be transparent so the card background shows through */
+[data-testid="stFileUploader"] section div {
+    background-color: transparent !important;
+}
+
+/* 3. Make the text and small instructions match your theme */
+[data-testid="stFileUploader"] section span,
+[data-testid="stFileUploader"] section small {
+    color: var(--text-primary) !important;
+}
+
+/* 4. Fix the cloud icon so it has no black background */
+[data-testid="stFileUploader"] section svg {
+    fill: var(--text-primary) !important;
+    background-color: transparent !important;
+}
+
+/* 5. Style the Browse Files button */
+[data-testid="stFileUploader"] button {
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-bright) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-testid="stFileUploader"] button:hover {
+    border-color: var(--accent-green) !important;
+    color: var(--accent-green) !important;
+}
+
+/* =========================================
+   LOGIN LOGO RESPONSIVENESS
+   ========================================= */
+.login-logo {
+    font-size: 4rem;
+    line-height: 0.95;
+}
+
+@media screen and (max-width: 768px) {
+    .login-logo {
+        font-size: 2.8rem !important;
+    }
+}
